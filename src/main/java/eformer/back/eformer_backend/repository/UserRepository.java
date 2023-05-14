@@ -8,11 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends CrudRepository<User, Integer> {
-    Optional<User> findUserByUserId(Integer userId);
-
-    Optional<User> findUserByUsername(String username);
-
-    boolean existsByUsernameAndPassword(String username, String password);
+    Optional<User> findByUsernameAndPassword(String username, String password);
 
     boolean existsByEmail(String email);
 

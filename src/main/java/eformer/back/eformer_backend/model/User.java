@@ -36,6 +36,14 @@ public class User {
     @Column(name = "ad_level")
     private final Integer adLevel;
 
+    public static boolean isValidAdLevel(Integer adLevel) {
+        return adLevel <= getMaxAdLevel();
+    }
+
+    public static int getMaxAdLevel() {
+        return 2;
+    }
+
     protected User() {
         this("", "", "", -1);
     }
@@ -96,6 +104,10 @@ public class User {
 
     public boolean isCustomer() {
         return getAdLevel() == 0;
+    }
+
+    public boolean isManager() {
+        return getAdLevel() >= 2;
     }
 
     public boolean isGuest() {
