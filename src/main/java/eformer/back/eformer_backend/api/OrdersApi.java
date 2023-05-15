@@ -50,6 +50,34 @@ public class OrdersApi {
         return customer.equals(actualUser.get()) || actualUser.get().isManager();
     }
 
+    public ResponseEntity<Object> getStatistics(User sender, Integer type) {
+        var actualSender = getActualUser(sender);
+
+        if (actualSender.isEmpty() || !actualSender.get().isEmployee()) {
+            /* 403 */
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
+        Object result;
+
+        switch (type) {
+            case 1 -> result = manager.getTotalSales();
+            case 2 -> result = manager.getAllPaid();
+            case 3 -> result = manager.getTotalSoldQuantity();
+            case 4 -> result = manager.getTotalActualSales();
+            case 5 -> result = manager.findAll();
+            default -> result = null;
+        }
+
+        if (result == null) {
+            /* 400 */
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        /* 200 */
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
     /**
      * Given JSON must contain the following fields:
      *  "orderId": ID of the order to fetch;
@@ -108,7 +136,7 @@ public class OrdersApi {
      * Given JSON must contain the following fields:
      *  "sender": Employee fetching the order;
      * */
-    @PostMapping("getAllByCustomer")
+    @PostMapping("getAllByEmployee")
     @ResponseBody
     public ResponseEntity<Object> getOrdersByEmployee(@RequestBody HashMap<String, Object> params) {
         var sender = (User) params.getOrDefault("sender", null);
