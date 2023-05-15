@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.Objects;
 
 
 /**
@@ -112,5 +113,33 @@ public class User {
 
     public boolean isGuest() {
         return getAdLevel() < 0 || getUserId() < 0;
+    }
+
+    public boolean isEmployee() {
+        return getAdLevel() >= 1;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User user)) return false;
+        return Objects.equals(getUserId(), user.getUserId())
+                && Objects.equals(getUsername(), user.getUsername())
+                && Objects.equals(getEmail(), user.getEmail())
+                && Objects.equals(getPassword(), user.getPassword())
+                && Objects.equals(getCreateTime(), user.getCreateTime())
+                && Objects.equals(getAdLevel(), user.getAdLevel());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                getUserId(),
+                getUsername(),
+                getEmail(),
+                getPassword(),
+                getCreateTime(),
+                getAdLevel()
+        );
     }
 }

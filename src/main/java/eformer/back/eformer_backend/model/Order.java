@@ -2,8 +2,7 @@ package eformer.back.eformer_backend.model;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.Objects;
+import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -64,6 +63,19 @@ public class Order {
     @Transient
     @JsonIgnore
     private static ItemRepository itemsManager;
+
+    /**
+     * Used to store items locally & temporarily,
+     * to perform the necessary checks on the quantities of all items
+     * before saving to the database.
+     * */
+    @Transient
+    @JsonIgnore
+    private final ArrayList<Item> itemsCache = new ArrayList<>();
+
+    @Transient
+    @JsonIgnore
+    private final HashSet<OrderItem> orderItemsCache = new HashSet<>();
 
     protected Order(Integer orderId, Double total, Timestamp creationDate,
                     Integer numberOfItems, Double amountPaid,
@@ -176,25 +188,59 @@ public class Order {
 
             /* Remove if quantity is zero */
             if (orderItem.get().getQuantity() == 0) {
-                orderItemsManager.delete(orderItem.get());
+                /* Not present locally, thus must be in the database */
+                if (!orderItemsCache.remove(orderItem.get())) {
+                    orderItemsManager.delete(orderItem.get());
+                }
             } else {
-                orderItemsManager.save(orderItem.get());
+                orderItemsCache.add(orderItem.get());
             }
 
-            /* If negative returns the items, positive takes them */
+            /* If negative adds the items, positive removes them */
             item.addQuantity(-newQuantity);
         } else if (newQuantity > 0 && item.removeQuantity(newQuantity)) {
             numberOfItems += newQuantity;
             total += item.getUnitPrice() * newQuantity;
 
-            var newOrderItem = new OrderItem(this, item, newQuantity);
-
-            orderItemsManager.save(newOrderItem);
+            orderItemsCache.add(new OrderItem(this, item, newQuantity));
         } else {
+            itemsCache.clear();
+            orderItemsManager.deleteAllByOrder(this);
             throw new NegativeQuantityException();
         }
 
-        itemsManager.save(item);
+        itemsCache.add(item);
+    }
+
+    public void save() {
+        itemsManager.saveAll(itemsCache);
+        itemsCache.clear();
+
+        orderItemsManager.saveAll(orderItemsCache);
+        orderItemsCache.clear();
+    }
+
+    public void clear() {
+        itemsCache.clear();
+        orderItemsCache.clear();
+    }
+
+    public void returnItems() {
+        var orderItems = orderItemsManager.findAllByOrder(this);
+
+        for (var orderItem: orderItems) {
+            var item = orderItem.getItem();
+
+            item.addQuantity(-orderItem.getQuantity());
+
+            itemsManager.save(item);
+        }
+    }
+
+    public void cancel() {
+        returnItems();
+        clear();
+        orderItemsManager.deleteAllByOrder(this);
     }
 
     @Override

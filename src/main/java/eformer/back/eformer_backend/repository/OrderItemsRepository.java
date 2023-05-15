@@ -20,4 +20,8 @@ public interface OrderItemsRepository extends CrudRepository<OrderItem, OrderIte
 
     @Query("SELECT SUM(o.quantity) FROM OrderItem o WHERE o.item = :item")
     Integer getSoldItemQuantity(@Param("item") Item item);
+
+    void deleteAllByOrder(Order order);
+
+    void deleteById(OrderItemId id);
 }

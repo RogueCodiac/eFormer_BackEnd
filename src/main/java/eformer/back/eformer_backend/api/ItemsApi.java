@@ -72,7 +72,7 @@ public class ItemsApi {
     @ResponseBody
     public ResponseEntity<Object> getItemById(@RequestParam(name = "id") Integer itemId) {
         try {
-            return manager.findByItemId(itemId)
+            return manager.findById(itemId)
                     .<ResponseEntity<Object>>map(item -> new ResponseEntity<>(item, HttpStatus.OK)) /* 200 */
                     .orElseGet(() -> new ResponseEntity<>(null, HttpStatus.UNPROCESSABLE_ENTITY)); /* 422 */
         } catch (Exception ignored) {

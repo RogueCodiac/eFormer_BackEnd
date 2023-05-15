@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ItemRepository extends CrudRepository<Item, Integer> {
-    Optional<Item> findByItemId(Integer id);
-
     Optional<Item> findByName(String name);
 
     List<Item> findAllByIntroductionDateAfter(Date date);
