@@ -157,5 +157,34 @@ public class OrdersApi {
         return new ResponseEntity<>(manager.findAllByEmployee(sender), HttpStatus.OK);
     }
 
+    @PostMapping("totalSales")
+    @ResponseBody
+    public ResponseEntity<Object> getTotalSales(@RequestBody User sender) {
+        return getStatistics(sender, 1);
+    }
 
+
+    @PostMapping("allPaid")
+    @ResponseBody
+    public ResponseEntity<Object> getPaidOrders(@RequestBody User sender) {
+        return getStatistics(sender, 2);
+    }
+
+    @PostMapping("totalSoldQuantity")
+    @ResponseBody
+    public ResponseEntity<Object> getTotalQuantity(@RequestBody User sender) {
+        return getStatistics(sender, 3);
+    }
+
+    @PostMapping("totalActualSales")
+    @ResponseBody
+    public ResponseEntity<Object> getTotalActualSales(@RequestBody User sender) {
+        return getStatistics(sender, 4);
+    }
+
+    @PostMapping("allOrders")
+    @ResponseBody
+    public ResponseEntity<Object> getOrders(@RequestBody User sender) {
+        return getStatistics(sender, 5);
+    }
 }

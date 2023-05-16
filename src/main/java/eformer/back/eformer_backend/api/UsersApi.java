@@ -60,9 +60,9 @@ public class UsersApi {
          return error;
      }
 
-     @GetMapping("user")
+     @GetMapping("signIn")
      @ResponseBody
-     public ResponseEntity<Object> getUser(@RequestParam(name = "username") String username,
+     public ResponseEntity<Object> signIn(@RequestParam(name = "username") String username,
                                            @RequestParam(name = "password") String password) {
          try {
              return manager.findByUsernameAndPassword(username, password)
