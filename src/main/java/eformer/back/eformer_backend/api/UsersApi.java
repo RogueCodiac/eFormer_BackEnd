@@ -11,7 +11,7 @@ import java.util.Date;
 import java.util.HashMap;
 
 @RestController
-@RequestMapping("/api/users/")
+@RequestMapping("/api/v1/users/")
 public class UsersApi {
     private static final String emailPattern = "^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$";
 

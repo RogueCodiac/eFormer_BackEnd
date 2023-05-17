@@ -10,7 +10,7 @@ import java.util.Date;
 
 
 @RestController
-@RequestMapping("/api/items/")
+@RequestMapping("/api/v1/items/")
 public class ItemsApi {
     final ItemRepository manager;
 

@@ -12,7 +12,7 @@ import java.util.Optional;
 
 
 @RestController
-@RequestMapping("/api/orders/")
+@RequestMapping("/api/v1/orders/")
 public class OrdersApi {
     final OrderRepository manager;
     final UserRepository usersManager;

@@ -29,6 +29,9 @@ public class User implements UserDetails {
     @Column(name = "username")
     private String username;
 
+    @Column(name = "full_name")
+    private String fullName;
+
     @Column(name = "email")
     private String email;
 
@@ -55,17 +58,23 @@ public class User implements UserDetails {
     }
 
     protected User(Integer userId, String username, String email,
-                   String password, Timestamp createTime, Integer adLevel) {
+                   String password, Timestamp createTime, Integer adLevel,
+                   String fullName) {
         setUsername(username);
         setEmail(email);
         setPassword(password);
+        setFullName(fullName);
         this.adLevel = adLevel;
         this.userId = userId;
         this.createTime = createTime;
     }
 
+    public User(String username, String email, String password, Integer adLevel, String fullName) {
+        this(-1, username, email, password, new Timestamp(new Date().getTime()), adLevel, fullName);
+    }
+
     public User(String username, String email, String password, Integer adLevel) {
-        this(-1, username, email, password, new Timestamp(new Date().getTime()), adLevel);
+        this(-1, username, email, password, new Timestamp(new Date().getTime()), adLevel, "");
     }
 
     public User(String username, String email, String password) {
@@ -106,6 +115,14 @@ public class User implements UserDetails {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
     }
 
     public String getRole() {
