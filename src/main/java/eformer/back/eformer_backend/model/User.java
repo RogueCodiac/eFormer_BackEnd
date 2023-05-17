@@ -1,10 +1,15 @@
 package eformer.back.eformer_backend.model;
 
 import jakarta.persistence.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 
 
@@ -15,7 +20,7 @@ import java.util.Objects;
  */
 @Entity
 @Table(name = "users")
-public class User {
+public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
@@ -71,6 +76,26 @@ public class User {
         return username;
     }
 
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return getAdLevel() > -2;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return getCreateTime().isBefore(getCreateTime().plusYears(1));
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return getAdLevel() > -2;
+    }
+
     public void setUsername(String username) {
         this.username = username;
     }
@@ -81,6 +106,21 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getRole() {
+        return switch (getAdLevel()) {
+            case 2 -> "Manager";
+            case 1 -> "Employee";
+            case 0 -> "Customer";
+            case -1 -> "Guest";
+            default -> "Banned";
+        };
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority(getRole()));
     }
 
     public String getPassword() {
