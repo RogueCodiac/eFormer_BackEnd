@@ -31,6 +31,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests()
                 .requestMatchers("/api/v1/auth/**") // Permit these requests
                 .permitAll()
+                .requestMatchers("/api/v1/items/get**") // Anyone can see the items
+                .permitAll()
                 .anyRequest() // These require authentication
                 .authenticated()
                 .and()

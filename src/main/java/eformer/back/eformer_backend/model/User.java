@@ -43,7 +43,7 @@ public class User implements UserDetails {
     private final Timestamp createTime;
 
     @Column(name = "ad_level")
-    private final Integer adLevel;
+    private Integer adLevel;
 
     public static boolean isValidAdLevel(Integer adLevel) {
         return adLevel <= getMaxAdLevel();
@@ -64,7 +64,7 @@ public class User implements UserDetails {
         setEmail(email);
         setPassword(password);
         setFullName(fullName);
-        this.adLevel = adLevel;
+        setAdLevel(adLevel);
         this.userId = userId;
         this.createTime = createTime;
     }
@@ -158,6 +158,10 @@ public class User implements UserDetails {
 
     public Integer getAdLevel() {
         return adLevel;
+    }
+
+    public void setAdLevel(Integer adLevel) {
+        this.adLevel = adLevel;
     }
 
     public boolean isCustomer() {

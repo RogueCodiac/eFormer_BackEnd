@@ -41,6 +41,10 @@ public class AuthenticationService {
                 request.getFullName()
         );
 
+        if (userManager.existsByUsername(user.getUsername().toLowerCase())) {
+            throw new RuntimeException("Already exists");
+        }
+
         userManager.save(user);
 
         return new AuthenticationResponse(tokenService.generateToken(user));

@@ -2,19 +2,23 @@ package eformer.back.eformer_backend.api;
 
 import eformer.back.eformer_backend.model.Item;
 import eformer.back.eformer_backend.repository.ItemRepository;
+import eformer.back.eformer_backend.repository.UserRepository;
+import eformer.back.eformer_backend.utility.auth.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
+import java.util.HashMap;
 
 
 @RestController
 @RequestMapping("/api/v1/items/")
-public class ItemsApi {
+public class ItemsApi extends BaseApi {
     final ItemRepository manager;
 
-    public ItemsApi(ItemRepository manager) {
+    public ItemsApi(ItemRepository manager, JwtService jService, UserRepository userRepo) {
+        super(jService, userRepo);
         this.manager = manager;
     }
 
@@ -108,8 +112,13 @@ public class ItemsApi {
 
     @PostMapping("create")
     @ResponseBody
-    public ResponseEntity<Object> createItem(@RequestBody Item item) {
+    public ResponseEntity<Object> create(@RequestHeader HashMap<String, String> header,
+                                         @RequestBody Item item) {
         try {
+            if (canUserChange(header)) {
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            }
+
             var error = checkItem(item);
 
             if (error.length() > 0) {
@@ -149,8 +158,14 @@ public class ItemsApi {
 
     @PostMapping("update")
     @ResponseBody
-    public ResponseEntity<Object> updateItem(@RequestBody Item item) {
+    public ResponseEntity<Object> updateItem(
+            @RequestHeader HashMap<String, String> header,
+            @RequestBody Item item) {
         try {
+            if (canUserChange(header)) {
+                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            }
+
             var error = checkItemForUpdate(item);
 
             if (error.length() > 0) {

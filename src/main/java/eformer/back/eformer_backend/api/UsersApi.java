@@ -3,8 +3,10 @@ package eformer.back.eformer_backend.api;
 
 import eformer.back.eformer_backend.model.User;
 import eformer.back.eformer_backend.repository.UserRepository;
+import eformer.back.eformer_backend.utility.auth.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
@@ -19,8 +21,11 @@ public class UsersApi {
 
     final UserRepository manager;
 
-     public UsersApi(UserRepository manager) {
+    final JwtService jService;
+
+     public UsersApi(UserRepository manager, JwtService jService) {
          this.manager = manager;
+         this.jService = jService;
      }
 
      public boolean isNotValidEmail(String email) {
@@ -60,30 +65,18 @@ public class UsersApi {
          return error;
      }
 
-     @GetMapping("signIn")
-     @ResponseBody
-     public ResponseEntity<Object> signIn(@RequestParam(name = "username") String username,
-                                           @RequestParam(name = "password") String password) {
-         try {
-             return manager.findByUsernameAndPassword(username, password)
-                     .<ResponseEntity<Object>>map(user -> new ResponseEntity<>(user, HttpStatus.OK)) /* 200 */
-                     .orElseGet(() -> new ResponseEntity<>(null, HttpStatus.UNPROCESSABLE_ENTITY)); /* 422 */
-         } catch (Exception ignored) {
-             /* Prevent potential server crash */
-             return new ResponseEntity<>(HttpStatus.BAD_REQUEST); /* 400 */
-         }
-     }
-
      public ResponseEntity<Object> getUsers(HashMap<String, Object> parameters,
                                             boolean isAfter) {
          try {
-             var sender = (User) parameters.getOrDefault("sender", null);
+             var token = (String) parameters.getOrDefault("token", null);
              var date = (Date) parameters.getOrDefault("date", null);
 
-             if (sender == null || date == null) {
+             if (token == null || date == null || jService.isTokenExpired(token)) {
                  return new ResponseEntity<>("Missing sender or date fields",
                          HttpStatus.UNPROCESSABLE_ENTITY);
              }
+
+             var sender = manager.findByUsername(jService.extractUsername(token)).orElseThrow();
 
              var actualSender = manager.findByUsernameAndPassword(sender.getUsername(),
                      sender.getPassword());
@@ -134,20 +127,23 @@ public class UsersApi {
      * */
     @PostMapping("create")
     @ResponseBody
-    public ResponseEntity<Object> create(@RequestBody HashMap<String, User> parameters) {
+    public ResponseEntity<Object> create(@RequestBody HashMap<String, Object> parameters) {
         try {
             var user = (User) parameters.getOrDefault("user", null);
-            var creator = (User) parameters.getOrDefault("creator", null);
+            var token = (String) parameters.getOrDefault("token", null);
 
-            if (user == null || creator == null) {
+            if (user == null || token == null || jService.isTokenExpired(token)) {
                 /* 422 */
-                return new ResponseEntity<>("No creator or/and user", HttpStatus.UNPROCESSABLE_ENTITY);
+                return new ResponseEntity<>("No user and/or token", HttpStatus.UNPROCESSABLE_ENTITY);
             }
 
-            var trueCreator = manager.findByUsernameAndPassword(creator.getUsername(),
-                    creator.getPassword());
+            if (user.getAdLevel() >= User.getMaxAdLevel()) {
+                user.setAdLevel(1);
+            }
 
-            if (trueCreator.isEmpty() || !trueCreator.get().isManager()) {
+            var creator = manager.findByUsername(jService.extractUsername(token));
+
+            if (creator.isEmpty() || !creator.get().isManager()) {
                 /* 403 */
                 return new ResponseEntity<>("Creator not manager", HttpStatus.FORBIDDEN);
             }
