@@ -19,7 +19,8 @@ public class Application {
 
     final ItemRepository itemRepo;
 
-    public Application(OrderItemsRepository orderItemsRepo, OrderRepository orderRepo, UserRepository userRepo, ItemRepository itemRepo) {
+    public Application(OrderItemsRepository orderItemsRepo, OrderRepository orderRepo,
+                       UserRepository userRepo, ItemRepository itemRepo) {
         this.orderItemsRepo = orderItemsRepo;
         this.orderRepo = orderRepo;
         this.userRepo = userRepo;

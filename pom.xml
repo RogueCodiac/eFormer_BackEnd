@@ -71,6 +71,16 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
+        <!--
+            Enables auto-refresh.
+            To enable on IntelliJ, File->Setting –> Build, Execution, Deployment –> Compiler–>Build project automatically.
+            CTRL+F9 to force reload.
+          -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <optional>true</optional>
+        </dependency>
 
     </dependencies>
 
