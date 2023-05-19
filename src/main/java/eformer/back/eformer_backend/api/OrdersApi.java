@@ -1,5 +1,7 @@
 package eformer.back.eformer_backend.api;
 
+import eformer.back.eformer_backend.model.Item;
+import eformer.back.eformer_backend.model.Order;
 import eformer.back.eformer_backend.model.User;
 import eformer.back.eformer_backend.repository.OrderRepository;
 import eformer.back.eformer_backend.repository.UserRepository;
@@ -8,8 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.HashMap;
-import java.util.Optional;
 
 
 @RestController
@@ -30,40 +32,11 @@ public class OrdersApi extends BaseApi {
         this.jService = jService;
     }
 
-    public Optional<User> getActualUser(User user) {
-        if (user == null) {
-            return Optional.empty();
-        }
-
-        return usersManager.findByUsernameAndPassword(user.getUsername(), user.getPassword());
-    }
-
-    public boolean validAccess(HashMap<String, Object> params) {
-        var user = (User) params.getOrDefault("user", null);
-        var orderId = (Integer) params.getOrDefault("orderId", -1);
-
-        if (user == null || orderId < 0) {
-            return false;
-        }
-
-        var actualUser = getActualUser(user);
-        var order = manager.findById(orderId);
-
-        if (actualUser.isEmpty() || order.isEmpty()) {
-            return false;
-        }
-
-        var customer = order.get().getCustomer();
-
-        return customer.equals(actualUser.get()) || actualUser.get().isManager();
-    }
-
-    public ResponseEntity<Object> getStatistics(User sender, Integer type) {
-        var actualSender = getActualUser(sender);
-
-        if (actualSender.isEmpty() || !actualSender.get().isEmployee()) {
+    public ResponseEntity<Object> getStatistics(HashMap<String, String> header,
+                                                Integer type) {
+        if (!isManager(header)) {
             /* 403 */
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>("User is not a manager", HttpStatus.FORBIDDEN);
         }
 
         Object result;
@@ -79,120 +52,314 @@ public class OrdersApi extends BaseApi {
 
         if (result == null) {
             /* 400 */
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Internal error, contact IT", HttpStatus.BAD_REQUEST);
         }
 
         /* 200 */
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
-    /**
-     * Given JSON must contain the following fields:
-     *  "orderId": ID of the order to fetch;
-     *  "user": User fetching the order;
-     * */
-    @PostMapping("getById")
-    @ResponseBody
-    public ResponseEntity<Object> getOrderById(@RequestBody HashMap<String, Object> params) {
+    public ResponseEntity<Object> getOrders(HashMap<String, String> header,
+                                           HashMap<String, Date> body,
+                                           boolean isAfter) {
         try {
-            if (validAccess(params)) {
-                var order = manager.findById((Integer) params.get("orderId"));
+            var date = body.getOrDefault("date", null);
 
-                /* Order exists, check is for the compiler */
-                if (order.isPresent()) {
-                    return new ResponseEntity<>(order.get(), HttpStatus.OK);
-                }
+            if (date == null || header == null) {
+                /* 422 */
+                return new ResponseEntity<>("Missing sender or date fields",
+                        HttpStatus.UNPROCESSABLE_ENTITY);
+            } else if (!canUserChange(header)) {
+                /* 403 */
+                return new ResponseEntity<>("Sender is not a manager",
+                        HttpStatus.FORBIDDEN);
             }
 
-            /* 400 */
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } catch (Exception ignored) {
+            /* 200 */
+            return new ResponseEntity<>(
+                    isAfter ? manager.findAllByCreationDateAfter(date) :
+                            manager.findAllByCreationDateBefore(date),
+                    HttpStatus.OK
+            );
+        } catch (Exception e) {
             /* Prevent potential server crash */
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); /* 400 */
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST); /* 400 */
         }
     }
 
-    /**
-     * Given JSON must contain the following fields:
-     *  "customer": Customer to search for;
-     *  "sender": User fetching the order;
-     * */
+    @PostMapping("getById")
+    public ResponseEntity<Object> getById(
+            @RequestHeader HashMap<String, String> header,
+            @RequestBody Integer id
+    ) {
+        try {
+            if (canUserChange(header)) {
+                /* 200 */
+                return new ResponseEntity<>(manager.findById(id).orElseThrow(), HttpStatus.OK);
+            }
+
+            /* 403 */
+            return new ResponseEntity<>("Sender is not an employee",
+                    HttpStatus.FORBIDDEN);
+        } catch (Exception e) {
+            /* 400 */
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @PostMapping("getAllByCustomer")
-    @ResponseBody
-    public ResponseEntity<Object> getOrdersByCustomer(@RequestBody HashMap<String, Object> params) {
-        var customer = (User) params.getOrDefault("customer", null);
-        var sender = (User) params.getOrDefault("sender", null);
+    public ResponseEntity<Object> getByCustomer(
+            @RequestHeader HashMap<String, String> header,
+            @RequestBody User customer
+    ) {
+        try {
+            if (canUserChange(header)) {
+                /* 200 */
+                return new ResponseEntity<>(manager.findAllByCustomer(customer), HttpStatus.OK);
+            }
 
-        var actualCustomer = getActualUser(customer);
-        var actualSender = getActualUser(sender);
-
-        if (actualCustomer.isEmpty() || actualSender.isEmpty()) {
-            /* 400 */
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-
-        if (!actualSender.get().equals(actualCustomer.get()) || !actualSender.get().isEmployee()) {
             /* 403 */
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>("Sender is not an employee",
+                    HttpStatus.FORBIDDEN);
+        } catch (Exception e) {
+            /* 400 */
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
+    }
 
-        /* 200 */
-        return new ResponseEntity<>(manager.findAllByCustomer(customer), HttpStatus.OK);
+    @PostMapping("getAllByEmployee")
+    public ResponseEntity<Object> getByEmployee(
+            @RequestHeader HashMap<String, String> header,
+            @RequestBody User employee
+    ) {
+        try {
+            if (canUserChange(header)) {
+                /* 200 */
+                return new ResponseEntity<>(manager.findAllByEmployee(employee), HttpStatus.OK);
+            }
+
+            /* 403 */
+            return new ResponseEntity<>("Sender is not an employee",
+                    HttpStatus.FORBIDDEN);
+        } catch (Exception e) {
+            /* 400 */
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
 
     /**
-     * Given JSON must contain the following fields:
-     *  "sender": Employee fetching the order;
+     * Must include `customer` & `employee` in the body
      * */
-    @PostMapping("getAllByEmployee")
-    @ResponseBody
-    public ResponseEntity<Object> getOrdersByEmployee(@RequestBody HashMap<String, Object> params) {
-        var sender = (User) params.getOrDefault("sender", null);
+    @PostMapping("getAllByCustomerAndEmployee")
+    public ResponseEntity<Object> getByCustomerAndEmployee(
+            @RequestHeader HashMap<String, String> header,
+            @RequestBody HashMap<String, User> users
+    ) {
+        try {
+            var customer = users.get("customer");
+            var employee = users.get("employee");
 
-        var actualSender = getActualUser(sender);
+            if (canUserChange(header)) {
+                /* 200 */
+                return new ResponseEntity<>(manager.findAllByCustomerAndEmployee(customer, employee)
+                        , HttpStatus.OK);
+            }
 
-        if (actualSender.isEmpty()) {
-            /* 400 */
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-
-        if (!actualSender.get().isEmployee()) {
             /* 403 */
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>("Sender is not an employee",
+                    HttpStatus.FORBIDDEN);
+        } catch (Exception e) {
+            /* 400 */
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-
-        /* 200 */
-        return new ResponseEntity<>(manager.findAllByEmployee(sender), HttpStatus.OK);
     }
 
-    @PostMapping("totalSales")
-    @ResponseBody
-    public ResponseEntity<Object> getTotalSales(@RequestBody User sender) {
-        return getStatistics(sender, 1);
+    @PostMapping("getAllByStatus")
+    public ResponseEntity<Object> getByStatus(
+            @RequestHeader HashMap<String, String> header,
+            @RequestBody String status
+    ) {
+        try {
+            if (canUserChange(header)) {
+                /* 200 */
+                return new ResponseEntity<>(manager.findAllByStatus(status), HttpStatus.OK);
+            }
+
+            /* 403 */
+            return new ResponseEntity<>("Sender is not an employee",
+                    HttpStatus.FORBIDDEN);
+        } catch (Exception e) {
+            /* 400 */
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
 
-
-    @PostMapping("allPaid")
-    @ResponseBody
-    public ResponseEntity<Object> getPaidOrders(@RequestBody User sender) {
-        return getStatistics(sender, 2);
+    @PostMapping("getAllBeforeDate")
+    public ResponseEntity<Object> getByDateBefore(
+            @RequestHeader HashMap<String, String> header,
+            @RequestBody HashMap<String, Date> body
+    ) {
+        return getOrders(header, body, false);
     }
 
-    @PostMapping("totalSoldQuantity")
-    @ResponseBody
-    public ResponseEntity<Object> getTotalQuantity(@RequestBody User sender) {
-        return getStatistics(sender, 3);
+    @PostMapping("getAllAfterDate")
+    public ResponseEntity<Object> getByDateAfter(
+            @RequestHeader HashMap<String, String> header,
+            @RequestBody HashMap<String, Date> body
+    ) {
+        return getOrders(header, body, true);
     }
 
-    @PostMapping("totalActualSales")
-    @ResponseBody
-    public ResponseEntity<Object> getTotalActualSales(@RequestBody User sender) {
-        return getStatistics(sender, 4);
+    @PostMapping("getAllBetweenDates")
+    public ResponseEntity<Object> getByDateBetween(
+            @RequestHeader HashMap<String, String> header,
+            @RequestBody HashMap<String, Date> body
+    ) {
+        try {
+            var start = body.getOrDefault("start", null);
+            var end = body.getOrDefault("end", null);
+
+
+            if (start == null || end == null || header == null) {
+                /* 422 */
+                return new ResponseEntity<>("Missing sender or date fields",
+                        HttpStatus.UNPROCESSABLE_ENTITY);
+            } else if (!canUserChange(header)) {
+                /* 403 */
+                return new ResponseEntity<>("Sender is not a manager",
+                        HttpStatus.FORBIDDEN);
+            }
+
+            /* 200 */
+            return new ResponseEntity<>(
+                    manager.findAllByCreationDateBetween(start, end),
+                    HttpStatus.OK
+            );
+        } catch (Exception e) {
+            /* Prevent potential server crash */
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST); /* 400 */
+        }
     }
 
-    @PostMapping("allOrders")
-    @ResponseBody
-    public ResponseEntity<Object> getOrders(@RequestBody User sender) {
-        return getStatistics(sender, 5);
+    @PostMapping("getTotalSales")
+    public ResponseEntity<Object> getTotalSales(
+            @RequestHeader HashMap<String, String> header
+    ) {
+        return getStatistics(header, 1);
+    }
+
+    @PostMapping("getAllPaid")
+    public ResponseEntity<Object> getAllPaid(
+            @RequestHeader HashMap<String, String> header
+    ) {
+        return getStatistics(header, 2);
+    }
+
+    @PostMapping("getTotalSoldQuantity")
+    public ResponseEntity<Object> getTotalQuantity(
+            @RequestHeader HashMap<String, String> header
+    ) {
+        return getStatistics(header, 3);
+    }
+
+    @PostMapping("getTotalActualSales")
+    public ResponseEntity<Object> getTotalActualSales(
+            @RequestHeader HashMap<String, String> header
+    ) {
+        return getStatistics(header, 4);
+    }
+
+    @PostMapping("getAll")
+    public ResponseEntity<Object> getAll(
+            @RequestHeader HashMap<String, String> header
+    ) {
+        return getStatistics(header, 5);
+    }
+
+    @PostMapping("confirm")
+    public ResponseEntity<Object> confirm(
+            @RequestHeader HashMap<String, String> header,
+            @RequestBody Integer orderId
+    ) {
+        try {
+            if (!canUserChange(header)) {
+                /* 403 */
+                return new ResponseEntity<>("User is not an employee", HttpStatus.FORBIDDEN);
+            }
+
+            var order = manager.findById(orderId).orElseThrow();
+            order.confirm();
+
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception e) {
+            /* 400 */
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping("cancel")
+    public ResponseEntity<Object> cancel(
+            @RequestHeader HashMap<String, String> header,
+            @RequestBody Integer orderId
+    ) {
+        try {
+            if (!canUserChange(header)) {
+                /* 403 */
+                return new ResponseEntity<>("User is not an employee", HttpStatus.FORBIDDEN);
+            }
+
+            var order = manager.findById(orderId).orElseThrow();
+            order.cancel();
+
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception e) {
+            /* 400 */
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping("update")
+    public ResponseEntity<Object> update(
+            @RequestHeader HashMap<String, String> header,
+            @RequestBody Order order
+    ) {
+        try {
+            if (!canUserChange(header)) {
+                /* 403 */
+                return new ResponseEntity<>("User is not an employee", HttpStatus.FORBIDDEN);
+            }
+
+            manager.save(order);
+
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception e) {
+            /* 400 */
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @PostMapping("create")
+    public ResponseEntity<Object> create(
+            @RequestHeader HashMap<String, String> header,
+            @RequestBody HashMap<String, Object> body
+    ) {
+        try {
+            var customer = (User) body.get("user");
+            var items = (HashMap<Item, Integer>) body.get("items");
+            var employee = extractUser(header);
+
+            if (!employee.isEmployee()) {
+                /* 403 */
+                return new ResponseEntity<>("User is not an employee", HttpStatus.FORBIDDEN);
+            }
+
+            var order = new Order(customer, employee, items);
+
+            return new ResponseEntity<>(manager.save(order), HttpStatus.OK);
+        } catch (Exception e) {
+            /* 400 */
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
 }

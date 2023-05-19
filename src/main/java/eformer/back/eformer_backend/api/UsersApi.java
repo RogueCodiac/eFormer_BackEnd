@@ -106,7 +106,7 @@ public class UsersApi extends BaseApi {
                  return new ResponseEntity<>("Missing sender or date fields",
                          HttpStatus.UNPROCESSABLE_ENTITY);
              } else if (!isManager(header)) {
-                 /* 423 */
+                 /* 403 */
                  return new ResponseEntity<>("Sender is not a manager",
                          HttpStatus.FORBIDDEN);
              }
@@ -160,7 +160,7 @@ public class UsersApi extends BaseApi {
                 /* 422 */
                 return new ResponseEntity<>("No user and/or invalid token", HttpStatus.UNPROCESSABLE_ENTITY);
             } else if (!isManager(header)) {
-                /* 423 */
+                /* 403 */
                 return new ResponseEntity<>("Sender not manager", HttpStatus.FORBIDDEN);
             }
 
@@ -200,7 +200,7 @@ public class UsersApi extends BaseApi {
                 /* 422 */
                 return new ResponseEntity<>("No props and/or invalid token", HttpStatus.UNPROCESSABLE_ENTITY);
             } else if (!isManager(header)) {
-                /* 423 */
+                /* 403 */
                 return new ResponseEntity<>("Sender not manager", HttpStatus.FORBIDDEN);
             }
 

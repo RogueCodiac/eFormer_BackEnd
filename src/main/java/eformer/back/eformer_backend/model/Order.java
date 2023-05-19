@@ -6,6 +6,8 @@ import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import eformer.back.eformer_backend.utility.InvalidOrderUpdateException;
+import eformer.back.eformer_backend.utility.OrderCannotChangeException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -92,13 +94,18 @@ public class Order {
         setNote(note);
     }
 
-    protected Order() {
+    public Order() {
         this(null, null);
     }
 
     public Order(User customer, User employee) {
         this(-1, 0.0, new Timestamp(new Date().getTime()), 0,
-                0.0, "", null, null, "");
+                0.0, "Pending", null, null, "");
+    }
+
+    public Order(User customer, User employee, HashMap<Item, Integer> items) {
+        this(customer, employee);
+        addItems(items);
     }
 
     public Double getTotal() {
@@ -177,7 +184,23 @@ public class Order {
         editItem(item, -quantity);
     }
 
+    public boolean isCanceled() {
+        return getStatus().equals("Cancelled");
+    }
+
+    public boolean isConfirmed() {
+        return getStatus().equals("Confirmed");
+    }
+
+    public boolean isPending() {
+        return getStatus().equals("Pending");
+    }
+
     public void editItem(Item item, Integer newQuantity) {
+        if (!isPending()) {
+            throw new OrderCannotChangeException("Order is " + getStatus());
+        }
+
         var orderItem = orderItemsManager.findById(new OrderItemId(item.getItemId(), getOrderId()));
 
         if (orderItem.isPresent() && (newQuantity > 0 || item.getQuantity() >= -newQuantity)) {
@@ -212,9 +235,21 @@ public class Order {
         itemsCache.add(item);
     }
 
-    public void save() {
+    public void addItems(HashMap<Item, Integer> items) {
+        for (var item: items.keySet()) {
+            addToOrder(item, items.get(item));
+        }
+    }
+
+    public void confirm() {
+        if (!isPending()) {
+            throw new InvalidOrderUpdateException("Order is " + getStatus());
+        }
+
         itemsManager.saveAll(itemsCache);
         itemsCache.clear();
+
+        setStatus("Confirmed");
 
         orderItemsManager.saveAll(orderItemsCache);
         orderItemsCache.clear();
@@ -238,9 +273,14 @@ public class Order {
     }
 
     public void cancel() {
+        if (isCanceled() || isConfirmed()) {
+            throw new InvalidOrderUpdateException("Order already " + getStatus());
+        }
+
         returnItems();
         clear();
         orderItemsManager.deleteAllByOrder(this);
+        setStatus("Cancelled");
     }
 
     @Override
