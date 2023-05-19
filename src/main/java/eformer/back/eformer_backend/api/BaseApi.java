@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
 
+
 @RestController
 public class BaseApi {
     final JwtService jService;
@@ -19,8 +20,14 @@ public class BaseApi {
     }
 
     public User extractUser(HashMap<String, String> header) {
+        String token = header.get("authorization").split(" ")[1];
+
+        if (jService.isTokenExpired(token)) {
+            throw new RuntimeException("Expired token");
+        }
+
         return userRepo
-                .findByUsername(jService.extractUsername(header.get("authorization").split(" ")[1]))
+                .findByUsername(jService.extractUsername(token))
                 .orElseThrow();
     }
 
@@ -28,5 +35,10 @@ public class BaseApi {
         var user = extractUser(header);
 
         return user.isEmployee() || user.isManager();
+    }
+
+    public boolean isManager(HashMap<String, String> header) {
+        var user = extractUser(header);
+        return user.isManager();
     }
 }
