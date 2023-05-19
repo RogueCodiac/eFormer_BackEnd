@@ -1,5 +1,6 @@
 package eformer.back.eformer_backend.model;
 
+import eformer.back.eformer_backend.utility.NegativeQuantityException;
 import jakarta.persistence.*;
 
 import java.util.Date;
@@ -93,6 +94,10 @@ public class Item {
     }
 
     public void addQuantity(Integer quantity) {
+        if (quantity < 0 && -quantity > getQuantity()) {
+            throw new NegativeQuantityException();
+        }
+
         this.quantity += quantity;
     }
 

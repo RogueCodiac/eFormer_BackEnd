@@ -23,10 +23,12 @@ import eformer.back.eformer_backend.model.keys.OrderItemId;
 import eformer.back.eformer_backend.repository.ItemRepository;
 import eformer.back.eformer_backend.repository.OrderItemsRepository;
 import eformer.back.eformer_backend.utility.NegativeQuantityException;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @Entity
 @Table(name = "orders")
+@Transactional
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -66,19 +68,6 @@ public class Order {
     @JsonIgnore
     private static ItemRepository itemsManager;
 
-    /**
-     * Used to store items locally & temporarily,
-     * to perform the necessary checks on the quantities of all items
-     * before saving to the database.
-     * */
-    @Transient
-    @JsonIgnore
-    private final ArrayList<Item> itemsCache = new ArrayList<>();
-
-    @Transient
-    @JsonIgnore
-    private final HashSet<OrderItem> orderItemsCache = new HashSet<>();
-
     protected Order(Integer orderId, Double total, Timestamp creationDate,
                     Integer numberOfItems, Double amountPaid,
                     String status, User customer,
@@ -100,12 +89,7 @@ public class Order {
 
     public Order(User customer, User employee) {
         this(-1, 0.0, new Timestamp(new Date().getTime()), 0,
-                0.0, "Pending", null, null, "");
-    }
-
-    public Order(User customer, User employee, HashMap<Item, Integer> items) {
-        this(customer, employee);
-        addItems(items);
+                0.0, "Pending", customer, employee, "");
     }
 
     public Double getTotal() {
@@ -176,12 +160,8 @@ public class Order {
         itemsManager = manager;
     }
 
-    public void addToOrder(Item item, Integer quantity) {
-        editItem(item, quantity);
-    }
-
-    public void removeFromOrder(Item item, Integer quantity) {
-        editItem(item, -quantity);
+    public void addToOrder(Integer itemId, Integer quantity) {
+        editItem(itemId, quantity);
     }
 
     public boolean isCanceled() {
@@ -196,49 +176,80 @@ public class Order {
         return getStatus().equals("Pending");
     }
 
-    public void editItem(Item item, Integer newQuantity) {
+    public boolean areValidItems(HashMap<String, Integer> items) {
+        for (var itemId: items.keySet()) {
+            var item = itemsManager.findById(Integer.parseInt(itemId));
+
+            if (item.isEmpty()) {
+                return false;
+            }
+
+            var orderItem = orderItemsManager.findById(new OrderItemId(item.get().getItemId(), getOrderId()));
+
+            if (orderItem.isEmpty() &&
+                    item.get().getQuantity() < items.get(itemId)) {
+                return false;
+            } else if (orderItem.isPresent() &&
+                    item.get().getQuantity() + orderItem.get().getQuantity() < items.get(itemId)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public void editItem(Integer itemId, Integer removedQuantity) {
         if (!isPending()) {
             throw new OrderCannotChangeException("Order is " + getStatus());
         }
 
-        var orderItem = orderItemsManager.findById(new OrderItemId(item.getItemId(), getOrderId()));
+        try {
+            var orderItem = orderItemsManager.findById(new OrderItemId(itemId, getOrderId()));
+            var item = itemsManager.findById(itemId).orElseThrow();
 
-        if (orderItem.isPresent() && (newQuantity > 0 || item.getQuantity() >= -newQuantity)) {
-            numberOfItems += newQuantity;
-            total += newQuantity * item.getUnitPrice();
+            if (orderItem.isPresent() && removedQuantity < 0) {
+                numberOfItems += removedQuantity;
+                total += removedQuantity * item.getUnitPrice();
 
-            orderItem.get().addQuantity(newQuantity);
+                orderItem.get().addQuantity(removedQuantity);
 
-            /* Remove if quantity is zero */
-            if (orderItem.get().getQuantity() == 0) {
-                /* Not present locally, thus must be in the database */
-                if (!orderItemsCache.remove(orderItem.get())) {
+                /* Remove if quantity is zero */
+                if (orderItem.get().getQuantity() == 0) {
                     orderItemsManager.delete(orderItem.get());
+                } else {
+                    orderItemsManager.save(orderItem.get());
                 }
+            } else if (removedQuantity > 0 && item.getQuantity() >= removedQuantity) {
+                numberOfItems += removedQuantity;
+                total += item.getUnitPrice() * removedQuantity;
+
+                orderItemsManager.save(new OrderItem(this, item, removedQuantity));
             } else {
-                orderItemsCache.add(orderItem.get());
+                throw new NegativeQuantityException();
             }
-
-            /* If negative adds the items, positive removes them */
-            item.addQuantity(-newQuantity);
-        } else if (newQuantity > 0 && item.removeQuantity(newQuantity)) {
-            numberOfItems += newQuantity;
-            total += item.getUnitPrice() * newQuantity;
-
-            orderItemsCache.add(new OrderItem(this, item, newQuantity));
-        } else {
-            itemsCache.clear();
+        } catch (NegativeQuantityException e) {
             orderItemsManager.deleteAllByOrder(this);
-            throw new NegativeQuantityException();
+            throw e;
         }
-
-        itemsCache.add(item);
     }
 
-    public void addItems(HashMap<Item, Integer> items) {
-        for (var item: items.keySet()) {
-            addToOrder(item, items.get(item));
+    public void addItems(HashMap<String, Integer> items) {
+        for (var itemId: items.keySet()) {
+            addToOrder(Integer.parseInt(itemId), items.get(itemId));
         }
+    }
+
+    public void setItems(HashMap<String, Integer> items) {
+        if (isConfirmed() || isCanceled()) {
+            throw new InvalidOrderUpdateException("Order already " + getStatus());
+        } else if (!areValidItems(items)) {
+            throw new InvalidOrderUpdateException("Quantities too large");
+        }
+
+        numberOfItems = 0;
+        total = 0.0;
+        orderItemsManager.deleteAllByOrder(this);
+        addItems(items);
     }
 
     public void confirm() {
@@ -246,18 +257,18 @@ public class Order {
             throw new InvalidOrderUpdateException("Order is " + getStatus());
         }
 
-        itemsManager.saveAll(itemsCache);
-        itemsCache.clear();
+        var orderItems = orderItemsManager.findAllByOrder(this);
+        var items = new ArrayList<Item>();
 
+        for (var orderItem: orderItems) {
+            var item = orderItem.getItem();
+
+            item.removeQuantity(orderItem.getQuantity());
+            items.add(item);
+        }
+
+        itemsManager.saveAll(items);
         setStatus("Confirmed");
-
-        orderItemsManager.saveAll(orderItemsCache);
-        orderItemsCache.clear();
-    }
-
-    public void clear() {
-        itemsCache.clear();
-        orderItemsCache.clear();
     }
 
     public void returnItems() {
@@ -266,19 +277,19 @@ public class Order {
         for (var orderItem: orderItems) {
             var item = orderItem.getItem();
 
-            item.addQuantity(-orderItem.getQuantity());
+            item.addQuantity(orderItem.getQuantity());
 
             itemsManager.save(item);
         }
     }
 
     public void cancel() {
-        if (isCanceled() || isConfirmed()) {
+        if (isCanceled()) {
             throw new InvalidOrderUpdateException("Order already " + getStatus());
+        } else if (isConfirmed()) {
+            returnItems();
         }
 
-        returnItems();
-        clear();
         orderItemsManager.deleteAllByOrder(this);
         setStatus("Cancelled");
     }

@@ -7,10 +7,12 @@ import eformer.back.eformer_backend.model.keys.OrderItemId;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
+@Transactional
 public interface OrderItemsRepository extends CrudRepository<OrderItem, OrderItemId> {
     Optional<OrderItem> findById(OrderItemId id);
 

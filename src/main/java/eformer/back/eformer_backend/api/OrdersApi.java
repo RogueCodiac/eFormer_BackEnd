@@ -304,6 +304,8 @@ public class OrdersApi extends BaseApi {
             var order = manager.findById(orderId).orElseThrow();
             order.confirm();
 
+            manager.save(order);
+
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
             /* 400 */
@@ -326,6 +328,8 @@ public class OrdersApi extends BaseApi {
             var order = manager.findById(orderId).orElseThrow();
             order.cancel();
 
+            manager.save(order);
+
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
             /* 400 */
@@ -337,7 +341,7 @@ public class OrdersApi extends BaseApi {
     @ResponseBody
     public ResponseEntity<Object> update(
             @RequestHeader HashMap<String, String> header,
-            @RequestBody Order order
+            @RequestBody HashMap<String, Integer> props
     ) {
         try {
             if (!canUserChange(header)) {
@@ -345,9 +349,13 @@ public class OrdersApi extends BaseApi {
                 return new ResponseEntity<>("User is not an employee", HttpStatus.FORBIDDEN);
             }
 
-            manager.save(order);
+            var order = manager.findById(props.get("orderId")).orElseThrow();
 
-            return new ResponseEntity<>(HttpStatus.OK);
+            props.remove("orderId");
+
+            order.setItems(props);
+
+            return new ResponseEntity<>(manager.save(order), HttpStatus.OK);
         } catch (Exception e) {
             /* 400 */
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -361,22 +369,37 @@ public class OrdersApi extends BaseApi {
             @RequestHeader HashMap<String, String> header,
             @RequestBody HashMap<String, Object> body
     ) {
+        Order order = null;
+
         try {
-            var customer = (User) body.get("user");
-            var items = (HashMap<Item, Integer>) body.get("items");
+            var customerId = (Integer) body.get("customerId");
+            var customer = usersManager.findById(customerId).orElseThrow();
+            var items = (HashMap<String, Integer>) body.get("items");
             var employee = extractUser(header);
+            var note = (String) body.getOrDefault("note", "");
 
             if (!employee.isEmployee()) {
                 /* 403 */
                 return new ResponseEntity<>("User is not an employee", HttpStatus.FORBIDDEN);
             }
 
-            var order = new Order(customer, employee, items);
+            var primitiveOrder = new Order(customer, employee);
+            primitiveOrder.setNote(note);
 
-            return new ResponseEntity<>(manager.save(order), HttpStatus.OK);
+            if (!primitiveOrder.areValidItems(items)) {
+                /* 422 */
+                return new ResponseEntity<>("Quantities too large", HttpStatus.UNPROCESSABLE_ENTITY);
+            }
+
+            order = manager.save(primitiveOrder);
+            order.addItems(items);
+
+            /* 200 */
+            return new ResponseEntity<>(order, HttpStatus.OK);
         } catch (Exception e) {
             /* 400 */
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(order != null ? order.getOrderId() : e.getMessage(),
+                    HttpStatus.BAD_REQUEST);
         }
     }
 }
