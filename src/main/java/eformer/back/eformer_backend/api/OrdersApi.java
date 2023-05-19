@@ -344,12 +344,19 @@ public class OrdersApi extends BaseApi {
             @RequestBody HashMap<String, Integer> props
     ) {
         try {
-            if (!canUserChange(header)) {
+            var employee = extractUser(header);
+
+            if (!employee.isEmployee()) {
                 /* 403 */
                 return new ResponseEntity<>("User is not an employee", HttpStatus.FORBIDDEN);
             }
 
             var order = manager.findById(props.get("orderId")).orElseThrow();
+
+            if (!order.getEmployee().equals(employee) && !employee.isManager()) {
+                /* 403 */
+                return new ResponseEntity<>("Unauthorized request", HttpStatus.FORBIDDEN);
+            }
 
             props.remove("orderId");
 
