@@ -88,6 +88,7 @@ public class OrdersApi extends BaseApi {
     }
 
     @PostMapping("getById")
+    @ResponseBody
     public ResponseEntity<Object> getById(
             @RequestHeader HashMap<String, String> header,
             @RequestBody Integer id
@@ -108,6 +109,7 @@ public class OrdersApi extends BaseApi {
     }
 
     @PostMapping("getAllByCustomer")
+    @ResponseBody
     public ResponseEntity<Object> getByCustomer(
             @RequestHeader HashMap<String, String> header,
             @RequestBody User customer
@@ -128,6 +130,7 @@ public class OrdersApi extends BaseApi {
     }
 
     @PostMapping("getAllByEmployee")
+    @ResponseBody
     public ResponseEntity<Object> getByEmployee(
             @RequestHeader HashMap<String, String> header,
             @RequestBody User employee
@@ -151,6 +154,7 @@ public class OrdersApi extends BaseApi {
      * Must include `customer` & `employee` in the body
      * */
     @PostMapping("getAllByCustomerAndEmployee")
+    @ResponseBody
     public ResponseEntity<Object> getByCustomerAndEmployee(
             @RequestHeader HashMap<String, String> header,
             @RequestBody HashMap<String, User> users
@@ -175,6 +179,7 @@ public class OrdersApi extends BaseApi {
     }
 
     @PostMapping("getAllByStatus")
+    @ResponseBody
     public ResponseEntity<Object> getByStatus(
             @RequestHeader HashMap<String, String> header,
             @RequestBody String status
@@ -195,6 +200,7 @@ public class OrdersApi extends BaseApi {
     }
 
     @PostMapping("getAllBeforeDate")
+    @ResponseBody
     public ResponseEntity<Object> getByDateBefore(
             @RequestHeader HashMap<String, String> header,
             @RequestBody HashMap<String, Date> body
@@ -203,6 +209,7 @@ public class OrdersApi extends BaseApi {
     }
 
     @PostMapping("getAllAfterDate")
+    @ResponseBody
     public ResponseEntity<Object> getByDateAfter(
             @RequestHeader HashMap<String, String> header,
             @RequestBody HashMap<String, Date> body
@@ -211,6 +218,7 @@ public class OrdersApi extends BaseApi {
     }
 
     @PostMapping("getAllBetweenDates")
+    @ResponseBody
     public ResponseEntity<Object> getByDateBetween(
             @RequestHeader HashMap<String, String> header,
             @RequestBody HashMap<String, Date> body
@@ -242,6 +250,7 @@ public class OrdersApi extends BaseApi {
     }
 
     @PostMapping("getTotalSales")
+    @ResponseBody
     public ResponseEntity<Object> getTotalSales(
             @RequestHeader HashMap<String, String> header
     ) {
@@ -249,6 +258,7 @@ public class OrdersApi extends BaseApi {
     }
 
     @PostMapping("getAllPaid")
+    @ResponseBody
     public ResponseEntity<Object> getAllPaid(
             @RequestHeader HashMap<String, String> header
     ) {
@@ -256,6 +266,7 @@ public class OrdersApi extends BaseApi {
     }
 
     @PostMapping("getTotalSoldQuantity")
+    @ResponseBody
     public ResponseEntity<Object> getTotalQuantity(
             @RequestHeader HashMap<String, String> header
     ) {
@@ -263,6 +274,7 @@ public class OrdersApi extends BaseApi {
     }
 
     @PostMapping("getTotalActualSales")
+    @ResponseBody
     public ResponseEntity<Object> getTotalActualSales(
             @RequestHeader HashMap<String, String> header
     ) {
@@ -270,6 +282,7 @@ public class OrdersApi extends BaseApi {
     }
 
     @PostMapping("getAll")
+    @ResponseBody
     public ResponseEntity<Object> getAll(
             @RequestHeader HashMap<String, String> header
     ) {
@@ -277,6 +290,7 @@ public class OrdersApi extends BaseApi {
     }
 
     @PostMapping("confirm")
+    @ResponseBody
     public ResponseEntity<Object> confirm(
             @RequestHeader HashMap<String, String> header,
             @RequestBody Integer orderId
@@ -298,6 +312,7 @@ public class OrdersApi extends BaseApi {
     }
 
     @PostMapping("cancel")
+    @ResponseBody
     public ResponseEntity<Object> cancel(
             @RequestHeader HashMap<String, String> header,
             @RequestBody Integer orderId
@@ -319,6 +334,7 @@ public class OrdersApi extends BaseApi {
     }
 
     @PostMapping("update")
+    @ResponseBody
     public ResponseEntity<Object> update(
             @RequestHeader HashMap<String, String> header,
             @RequestBody Order order
@@ -340,6 +356,7 @@ public class OrdersApi extends BaseApi {
 
     @SuppressWarnings("unchecked")
     @PostMapping("create")
+    @ResponseBody
     public ResponseEntity<Object> create(
             @RequestHeader HashMap<String, String> header,
             @RequestBody HashMap<String, Object> body
