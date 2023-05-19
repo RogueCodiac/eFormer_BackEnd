@@ -44,18 +44,11 @@ public class UsersApi extends BaseApi {
      public StringBuilder checkUser(User user) {
          var error = new StringBuilder();
          String username = user.getUsername();
+         String email = user.getEmail();
 
          if (isNotValidUsername(username) || manager.existsByUsername(username)) {
              error.append("Username already in use or is invalid (Must consist of alphanumeric characters only)\n");
          }
-
-         return error.append(checkUserUpdate(user));
-     }
-
-     public StringBuilder checkUserUpdate(User user) {
-         var error = new StringBuilder();
-
-         String email = user.getEmail();
 
          if (!User.isValidAdLevel(user.getAdLevel())) {
              error.append("Administrative level ")
@@ -70,6 +63,32 @@ public class UsersApi extends BaseApi {
          }
 
          if (isNotValidEmail(email) || manager.existsByEmail(email)) {
+             error.append("Email already in use or is invalid\n");
+         }
+
+         return error;
+     }
+
+     public StringBuilder checkUserUpdate(User user) {
+         var error = new StringBuilder();
+
+         String email = user.getEmail();
+         String password = user.getPassword();
+         Integer adLevel = user.getAdLevel();
+
+         if (adLevel != null && !User.isValidAdLevel(user.getAdLevel())) {
+             error.append("Administrative level ")
+                     .append(user.getAdLevel())
+                     .append(" is invalid, must be <= ")
+                     .append(User.getMaxAdLevel())
+                     .append('\n');
+         }
+
+         if (password != null && isNotValidPassword(password)) {
+             error.append("Invalid password must 8 chars at least");
+         }
+
+         if (email != null && isNotValidEmail(email)) {
              error.append("Email already in use or is invalid\n");
          }
 
@@ -100,7 +119,7 @@ public class UsersApi extends BaseApi {
              );
          } catch (Exception e) {
              /* Prevent potential server crash */
-             return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST); /* 400 */
+             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST); /* 400 */
          }
      }
 
@@ -166,7 +185,7 @@ public class UsersApi extends BaseApi {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             /* 400 */
-            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -226,7 +245,7 @@ public class UsersApi extends BaseApi {
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
             /* 400 */
-            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 }

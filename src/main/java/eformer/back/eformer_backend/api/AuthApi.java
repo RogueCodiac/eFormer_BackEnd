@@ -28,7 +28,7 @@ public class AuthApi {
             return new ResponseEntity<>(authService.register(request), HttpStatus.OK);
         } catch (Exception ignored) {
             /* 400 */
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
     }
@@ -43,7 +43,7 @@ public class AuthApi {
             return new ResponseEntity<>(authService.authenticate(request), HttpStatus.OK);
         } catch (Exception ignored) {
             /* 400 */
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
     }
 }

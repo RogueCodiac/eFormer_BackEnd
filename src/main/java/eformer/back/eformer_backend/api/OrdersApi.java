@@ -3,6 +3,7 @@ package eformer.back.eformer_backend.api;
 import eformer.back.eformer_backend.model.User;
 import eformer.back.eformer_backend.repository.OrderRepository;
 import eformer.back.eformer_backend.repository.UserRepository;
+import eformer.back.eformer_backend.utility.auth.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,13 +14,20 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/orders/")
-public class OrdersApi {
+public class OrdersApi extends BaseApi {
     final OrderRepository manager;
+
     final UserRepository usersManager;
 
-    public OrdersApi(OrderRepository manager, UserRepository usersManager) {
+    final JwtService jService;
+
+    public OrdersApi(OrderRepository manager,
+                     UserRepository usersManager,
+                     JwtService jService) {
+        super(jService, usersManager);
         this.manager = manager;
         this.usersManager = usersManager;
+        this.jService = jService;
     }
 
     public Optional<User> getActualUser(User user) {

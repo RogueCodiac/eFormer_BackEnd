@@ -81,7 +81,7 @@ public class ItemsApi extends BaseApi {
                     .orElseGet(() -> new ResponseEntity<>(null, HttpStatus.UNPROCESSABLE_ENTITY)); /* 422 */
         } catch (Exception e) {
             /* 400 */
-            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -94,7 +94,7 @@ public class ItemsApi extends BaseApi {
                     .orElseGet(() -> new ResponseEntity<>(null, HttpStatus.UNPROCESSABLE_ENTITY)); /* 422 */
         } catch (Exception e) {
             /* 400 */
-            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -106,7 +106,7 @@ public class ItemsApi extends BaseApi {
             return new ResponseEntity<>(manager.findAll(), HttpStatus.OK);
         } catch (Exception e) {
             /* 400 */
-            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -129,7 +129,7 @@ public class ItemsApi extends BaseApi {
             return new ResponseEntity<>(manager.save(item), HttpStatus.OK);
         } catch (Exception e) {
             /* 400 */
-            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -141,7 +141,7 @@ public class ItemsApi extends BaseApi {
             return new ResponseEntity<>(manager.findAllByIntroductionDateAfter(date), HttpStatus.OK);
         } catch (Exception e) {
             /* 400 */
-            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -153,7 +153,7 @@ public class ItemsApi extends BaseApi {
             return new ResponseEntity<>(manager.findAllByIntroductionDateBefore(date), HttpStatus.OK);
         } catch (Exception e) {
             /* 400 */
-            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -176,7 +176,7 @@ public class ItemsApi extends BaseApi {
             return new ResponseEntity<>(manager.save(item), HttpStatus.OK); /* 200 */
         } catch (Exception e) {
             /* 400 */
-            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 }
