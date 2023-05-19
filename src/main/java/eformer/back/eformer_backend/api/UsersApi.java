@@ -43,29 +43,35 @@ public class UsersApi extends BaseApi {
 
      public StringBuilder checkUser(User user) {
          var error = new StringBuilder();
-
-         String email = user.getEmail();
          String username = user.getUsername();
-
-         if (isNotValidEmail(email) || manager.existsByEmail(email)) {
-             error.append("Email already in use or is invalid\n");
-         }
 
          if (isNotValidUsername(username) || manager.existsByUsername(username)) {
              error.append("Username already in use or is invalid (Must consist of alphanumeric characters only)\n");
          }
 
-        if (!User.isValidAdLevel(user.getAdLevel())) {
-            error.append("Administrative level ")
-                    .append(user.getAdLevel())
-                    .append(" is invalid, must be <= ")
-                    .append(User.getMaxAdLevel())
-                    .append('\n');
-        }
+         return error.append(checkUserUpdate(user));
+     }
 
-        if (isNotValidPassword(user.getPassword())) {
-            error.append("Invalid password must 8 chars at least");
-        }
+     public StringBuilder checkUserUpdate(User user) {
+         var error = new StringBuilder();
+
+         String email = user.getEmail();
+
+         if (!User.isValidAdLevel(user.getAdLevel())) {
+             error.append("Administrative level ")
+                     .append(user.getAdLevel())
+                     .append(" is invalid, must be <= ")
+                     .append(User.getMaxAdLevel())
+                     .append('\n');
+         }
+
+         if (isNotValidPassword(user.getPassword())) {
+             error.append("Invalid password must 8 chars at least");
+         }
+
+         if (isNotValidEmail(email) || manager.existsByEmail(email)) {
+             error.append("Email already in use or is invalid\n");
+         }
 
          return error;
      }
@@ -92,15 +98,14 @@ public class UsersApi extends BaseApi {
                              manager.findAllByCreateTimeBefore(date),
                      HttpStatus.OK
              );
-         } catch (Exception ignored) {
+         } catch (Exception e) {
              /* Prevent potential server crash */
-             return new ResponseEntity<>(HttpStatus.BAD_REQUEST); /* 400 */
+             return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST); /* 400 */
          }
      }
 
      /**
       * Response Body must contain:
-      *     sender: User sending the request;
       *     date: Date after which to get the Users;
       * */
     @PostMapping("getAllAfter")
@@ -114,7 +119,6 @@ public class UsersApi extends BaseApi {
 
     /**
      * Response Body must contain:
-     *     sender: User sending the request;
      *     date: Date before which to get the Users;
      * */
     @PostMapping("getAllBefore")
@@ -126,11 +130,6 @@ public class UsersApi extends BaseApi {
         return getUsers(header, body, false);
     }
 
-    /**
-     * Must contain the following entries:
-     *  creator: User creating the new user, must be a manager at least;
-     *  user: New User.
-     * */
     @PostMapping("create")
     @ResponseBody
     public ResponseEntity<Object> create(
@@ -144,10 +143,6 @@ public class UsersApi extends BaseApi {
             } else if (!isManager(header)) {
                 /* 423 */
                 return new ResponseEntity<>("Sender not manager", HttpStatus.FORBIDDEN);
-            }
-
-            if (user.getAdLevel() >= User.getMaxAdLevel()) {
-                user.setAdLevel(1);
             }
 
             var error = checkUser(user);
@@ -169,9 +164,69 @@ public class UsersApi extends BaseApi {
 
             /* 200 */
             return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
             /* 400 */
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping("update")
+    @ResponseBody
+    public ResponseEntity<Object> update(
+            @RequestHeader HashMap<String, String> header,
+            @RequestBody HashMap<String, Object> props
+    ) {
+        try {
+            if (props == null || header == null) {
+                /* 422 */
+                return new ResponseEntity<>("No props and/or invalid token", HttpStatus.UNPROCESSABLE_ENTITY);
+            } else if (!isManager(header)) {
+                /* 423 */
+                return new ResponseEntity<>("Sender not manager", HttpStatus.FORBIDDEN);
+            }
+
+            var user = manager.findById((Integer) props.get("userId")).orElseThrow();
+            var userByUsername = manager.findByUsername((String) props.get("username")).orElseThrow();
+
+            if (!user.equals(userByUsername)) {
+                /* 422 */
+                return new ResponseEntity<>("Username & ID don't match", HttpStatus.UNPROCESSABLE_ENTITY);
+            }
+
+            props.remove("username");
+            props.remove("userId");
+
+            for (var prop: props.keySet()) {
+                var value = props.get(prop);
+
+                /* Use reflection to call setters */
+                User.class.getDeclaredMethod(
+                            "set"
+                                + prop.substring(0, 1).toUpperCase()
+                                + prop.substring(1),
+                                value.getClass()
+                ).invoke(user, value);
+            }
+
+            var error = checkUserUpdate(user);
+
+            if (error.length() > 0) {
+                /* 422 */
+                return new ResponseEntity<>(error.toString(), HttpStatus.UNPROCESSABLE_ENTITY);
+            }
+
+            if (props.containsKey("password")) {
+                /* Encode the new password */
+                user.setPassword(encoder.encode(user.getPassword()));
+            }
+
+            manager.save(user);
+
+            /* 200 */
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (Exception e) {
+            /* 400 */
+            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
         }
     }
 }

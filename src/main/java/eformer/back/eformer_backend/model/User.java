@@ -53,7 +53,7 @@ public class User implements UserDetails {
         return 2;
     }
 
-    protected User() {
+    public User() {
         this("", "", "", -1);
     }
 

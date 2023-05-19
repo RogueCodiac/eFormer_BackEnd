@@ -79,9 +79,9 @@ public class ItemsApi extends BaseApi {
             return manager.findById(itemId)
                     .<ResponseEntity<Object>>map(item -> new ResponseEntity<>(item, HttpStatus.OK)) /* 200 */
                     .orElseGet(() -> new ResponseEntity<>(null, HttpStatus.UNPROCESSABLE_ENTITY)); /* 422 */
-        } catch (Exception ignored) {
-            /* Prevent potential server crash */
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); /* 400 */
+        } catch (Exception e) {
+            /* 400 */
+            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -92,9 +92,9 @@ public class ItemsApi extends BaseApi {
             return manager.findByName(name)
                     .<ResponseEntity<Object>>map(item -> new ResponseEntity<>(item, HttpStatus.OK)) /* 200 */
                     .orElseGet(() -> new ResponseEntity<>(null, HttpStatus.UNPROCESSABLE_ENTITY)); /* 422 */
-        } catch (Exception ignored) {
-            /* Prevent potential server crash */
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); /* 400 */
+        } catch (Exception e) {
+            /* 400 */
+            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -104,9 +104,9 @@ public class ItemsApi extends BaseApi {
         try {
             /* 200 */
             return new ResponseEntity<>(manager.findAll(), HttpStatus.OK);
-        } catch (Exception ignored) {
-            /* Prevent potential server crash */
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); /* 400 */
+        } catch (Exception e) {
+            /* 400 */
+            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -125,10 +125,11 @@ public class ItemsApi extends BaseApi {
                 return new ResponseEntity<>(error.toString(), HttpStatus.UNPROCESSABLE_ENTITY); /* 422 */
             }
 
-            return new ResponseEntity<>(manager.save(item), HttpStatus.OK); /* 200 */
-        } catch (Exception ignored) {
-            /* Prevent potential server crash */
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); /* 400 */
+            /* 200 */
+            return new ResponseEntity<>(manager.save(item), HttpStatus.OK);
+        } catch (Exception e) {
+            /* 400 */
+            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -138,9 +139,9 @@ public class ItemsApi extends BaseApi {
         try {
             /* 200 */
             return new ResponseEntity<>(manager.findAllByIntroductionDateAfter(date), HttpStatus.OK);
-        } catch (Exception ignored) {
-            /* Prevent potential server crash */
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); /* 400 */
+        } catch (Exception e) {
+            /* 400 */
+            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -150,9 +151,9 @@ public class ItemsApi extends BaseApi {
         try {
             /* 200 */
             return new ResponseEntity<>(manager.findAllByIntroductionDateBefore(date), HttpStatus.OK);
-        } catch (Exception ignored) {
-            /* Prevent potential server crash */
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); /* 400 */
+        } catch (Exception e) {
+            /* 400 */
+            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -173,9 +174,9 @@ public class ItemsApi extends BaseApi {
             }
 
             return new ResponseEntity<>(manager.save(item), HttpStatus.OK); /* 200 */
-        } catch (Exception ignored) {
-            /* Prevent potential server crash */
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); /* 400 */
+        } catch (Exception e) {
+            /* 400 */
+            return new ResponseEntity<>(e, HttpStatus.BAD_REQUEST);
         }
     }
 }
