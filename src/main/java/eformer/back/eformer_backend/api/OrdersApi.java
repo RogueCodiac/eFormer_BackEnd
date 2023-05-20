@@ -32,7 +32,9 @@ public class OrdersApi extends BaseApi {
 
     public ResponseEntity<Object> getStatistics(HashMap<String, String> header,
                                                 Integer type) {
-        if (!isManager(header)) {
+        if (!canUserChange(header)) {
+            System.out.println(header);
+            System.out.println(extractUser(header));
             /* 403 */
             return new ResponseEntity<>("User is not a manager", HttpStatus.FORBIDDEN);
         }
