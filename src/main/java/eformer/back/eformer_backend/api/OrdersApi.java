@@ -1,6 +1,5 @@
 package eformer.back.eformer_backend.api;
 
-import eformer.back.eformer_backend.model.Item;
 import eformer.back.eformer_backend.model.Order;
 import eformer.back.eformer_backend.model.User;
 import eformer.back.eformer_backend.repository.OrderRepository;
@@ -10,7 +9,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
 import java.util.HashMap;
 
 
@@ -60,7 +58,7 @@ public class OrdersApi extends BaseApi {
     }
 
     public ResponseEntity<Object> getOrders(HashMap<String, String> header,
-                                           HashMap<String, Date> body,
+                                           HashMap<String, String> body,
                                            boolean isAfter) {
         try {
             var date = body.getOrDefault("date", null);
@@ -77,8 +75,8 @@ public class OrdersApi extends BaseApi {
 
             /* 200 */
             return new ResponseEntity<>(
-                    isAfter ? manager.findAllByCreationDateAfter(date) :
-                            manager.findAllByCreationDateBefore(date),
+                    isAfter ? manager.findAllByCreationDateAfter(processToDate(date)) :
+                            manager.findAllByCreationDateBefore(processToDate(date)),
                     HttpStatus.OK
             );
         } catch (Exception e) {
@@ -203,7 +201,7 @@ public class OrdersApi extends BaseApi {
     @ResponseBody
     public ResponseEntity<Object> getByDateBefore(
             @RequestHeader HashMap<String, String> header,
-            @RequestBody HashMap<String, Date> body
+            @RequestBody HashMap<String, String> body
     ) {
         return getOrders(header, body, false);
     }
@@ -212,7 +210,7 @@ public class OrdersApi extends BaseApi {
     @ResponseBody
     public ResponseEntity<Object> getByDateAfter(
             @RequestHeader HashMap<String, String> header,
-            @RequestBody HashMap<String, Date> body
+            @RequestBody HashMap<String, String> body
     ) {
         return getOrders(header, body, true);
     }
@@ -221,7 +219,7 @@ public class OrdersApi extends BaseApi {
     @ResponseBody
     public ResponseEntity<Object> getByDateBetween(
             @RequestHeader HashMap<String, String> header,
-            @RequestBody HashMap<String, Date> body
+            @RequestBody HashMap<String, String> body
     ) {
         try {
             var start = body.getOrDefault("start", null);
@@ -240,7 +238,8 @@ public class OrdersApi extends BaseApi {
 
             /* 200 */
             return new ResponseEntity<>(
-                    manager.findAllByCreationDateBetween(start, end),
+                    manager.findAllByCreationDateBetween(processToDate(start),
+                            processToDate(end)),
                     HttpStatus.OK
             );
         } catch (Exception e) {

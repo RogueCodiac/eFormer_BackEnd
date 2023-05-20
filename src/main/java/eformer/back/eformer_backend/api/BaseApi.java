@@ -5,6 +5,9 @@ import eformer.back.eformer_backend.repository.UserRepository;
 import eformer.back.eformer_backend.utility.auth.JwtService;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.HashMap;
 
 
@@ -40,5 +43,9 @@ public class BaseApi {
     public boolean isManager(HashMap<String, String> header) {
         var user = extractUser(header);
         return user.isManager();
+    }
+
+    public Date processToDate(String date) {
+        return Date.from(LocalDateTime.parse(date.split("\\.")[0]).atZone(ZoneId.systemDefault()).toInstant());
     }
 }

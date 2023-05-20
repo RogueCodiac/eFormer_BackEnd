@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
 import java.util.HashMap;
 
 
@@ -148,10 +147,10 @@ public class ItemsApi extends BaseApi {
 
     @PostMapping("getAllAfter")
     @ResponseBody
-    public ResponseEntity<Object> getItemsAfter(@RequestBody Date date) {
+    public ResponseEntity<Object> getItemsAfter(@RequestBody String date) {
         try {
             /* 200 */
-            return new ResponseEntity<>(manager.findAllByIntroductionDateAfter(date), HttpStatus.OK);
+            return new ResponseEntity<>(manager.findAllByIntroductionDateAfter(processToDate(date)), HttpStatus.OK);
         } catch (Exception e) {
             /* 400 */
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -160,10 +159,10 @@ public class ItemsApi extends BaseApi {
 
     @PostMapping("getAllBefore")
     @ResponseBody
-    public ResponseEntity<Object> getItemsBefore(@RequestBody Date date) {
+    public ResponseEntity<Object> getItemsBefore(@RequestBody String date) {
         try {
             /* 200 */
-            return new ResponseEntity<>(manager.findAllByIntroductionDateBefore(date), HttpStatus.OK);
+            return new ResponseEntity<>(manager.findAllByIntroductionDateBefore(processToDate(date)), HttpStatus.OK);
         } catch (Exception e) {
             /* 400 */
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);

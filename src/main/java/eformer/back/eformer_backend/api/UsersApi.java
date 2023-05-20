@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
 import java.util.HashMap;
 
 @RestController
@@ -99,7 +98,7 @@ public class UsersApi extends BaseApi {
                                             HashMap<String, Object> body,
                                             boolean isAfter) {
          try {
-             var date = (Date) body.getOrDefault("date", null);
+             var date = (String) body.getOrDefault("date", null);
 
              if (date == null || header == null) {
                  /* 422 */
@@ -113,8 +112,8 @@ public class UsersApi extends BaseApi {
 
              /* 200 */
              return new ResponseEntity<>(
-                     isAfter ? manager.findAllByCreateTimeAfter(date) :
-                             manager.findAllByCreateTimeBefore(date),
+                     isAfter ? manager.findAllByCreateTimeAfter(processToDate(date)) :
+                             manager.findAllByCreateTimeBefore(processToDate(date)),
                      HttpStatus.OK
              );
          } catch (Exception e) {
