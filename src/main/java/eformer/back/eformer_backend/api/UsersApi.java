@@ -135,6 +135,31 @@ public class UsersApi extends BaseApi {
         return getUsers(header, body, true);
     }
 
+    @PostMapping("getAll")
+    @ResponseBody
+    public ResponseEntity<Object> getAll(@RequestHeader HashMap<String, String> header) {
+        try {
+            if (header == null) {
+                /* 422 */
+                return new ResponseEntity<>("Missing sender or date fields",
+                        HttpStatus.UNPROCESSABLE_ENTITY);
+            } else if (!isManager(header)) {
+                /* 403 */
+                return new ResponseEntity<>("Sender is not a manager",
+                        HttpStatus.FORBIDDEN);
+            }
+
+            /* 200 */
+            return new ResponseEntity<>(
+                    manager.findAll(),
+                    HttpStatus.OK
+            );
+        } catch (Exception e) {
+            /* Prevent potential server crash */
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST); /* 400 */
+        }
+    }
+
     /**
      * Response Body must contain:
      *     date: Date before which to get the Users;
