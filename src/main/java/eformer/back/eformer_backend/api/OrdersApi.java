@@ -60,11 +60,9 @@ public class OrdersApi extends BaseApi {
     }
 
     public ResponseEntity<Object> getOrders(HashMap<String, String> header,
-                                           HashMap<String, String> body,
+                                           String date,
                                            boolean isAfter) {
         try {
-            var date = body.getOrDefault("date", null);
-
             if (date == null || header == null) {
                 /* 422 */
                 return new ResponseEntity<>("Missing sender or date fields",
@@ -203,18 +201,18 @@ public class OrdersApi extends BaseApi {
     @ResponseBody
     public ResponseEntity<Object> getByDateBefore(
             @RequestHeader HashMap<String, String> header,
-            @RequestBody HashMap<String, String> body
+            @RequestBody String date
     ) {
-        return getOrders(header, body, false);
+        return getOrders(header, date, false);
     }
 
     @PostMapping("getAllAfterDate")
     @ResponseBody
     public ResponseEntity<Object> getByDateAfter(
             @RequestHeader HashMap<String, String> header,
-            @RequestBody HashMap<String, String> body
+            @RequestBody String date
     ) {
-        return getOrders(header, body, true);
+        return getOrders(header, date, true);
     }
 
     @PostMapping("getAllBetweenDates")
