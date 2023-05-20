@@ -178,7 +178,7 @@ public class UsersApi extends BaseApi {
 
             response.put("userId", user.getUserId());
             response.put("adLevel", user.getAdLevel());
-            response.put("role", user.getRole());
+            response.put("role", user.translateRole());
 
             /* 200 */
             return new ResponseEntity<>(response, HttpStatus.OK);
@@ -257,7 +257,7 @@ public class UsersApi extends BaseApi {
                 /* 422 */
                 return new ResponseEntity<>("Missing sender or date fields",
                         HttpStatus.UNPROCESSABLE_ENTITY);
-            } else if (canUserChange(header)) {
+            } else if (!canUserChange(header)) {
                 /* 403 */
                 return new ResponseEntity<>("Sender is not a manager",
                         HttpStatus.FORBIDDEN);
