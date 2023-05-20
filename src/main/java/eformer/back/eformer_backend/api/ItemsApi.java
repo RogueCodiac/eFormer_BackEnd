@@ -47,26 +47,31 @@ public class ItemsApi extends BaseApi {
         return error;
     }
 
-    public StringBuilder checkItemForUpdate(Item item) {
+    public StringBuilder checkItemForUpdate(HashMap<String, Object> item) {
         var error = new StringBuilder();
 
-        if (item.getQuantity() <= 0) {
+        var quantity = (Integer) item.get("quantity");
+        var name = (String) item.get("name");
+        var unitPrice = (Double) item.get("unitPrice");
+        var itemId = (Integer) item.get("itemId");
+
+        if (quantity != null && quantity <= 0) {
             error.append(String.format("Invalid quantity %d must be a positive integer\n",
-                    item.getQuantity()));
+                    quantity));
         }
 
-        if (!manager.existsByNameIgnoreCase(item.getName())) {
+        if (name != null && !manager.existsByNameIgnoreCase(name)) {
             error.append(String.format("Invalid item '%s' does not exist\n",
-                    item.getName()));
+                    name));
         }
 
-        if (item.getUnitPrice() <= 0) {
+        if (unitPrice != null && unitPrice <= 0) {
             error.append(String.format("Invalid unit price %f must be a positive number\n",
-                    item.getUnitPrice()));
+                    unitPrice));
         }
 
-        if (!manager.existsById(item.getItemId())) {
-            error.append(String.format("Item (ID: %d) does not exist\n", item.getItemId()));
+        if (!manager.existsById(itemId)) {
+            error.append(String.format("Item (ID: %d) does not exist\n", itemId));
         }
 
         return error;
@@ -110,13 +115,21 @@ public class ItemsApi extends BaseApi {
         }
     }
 
+    /**
+     * An item must contain:
+     *  name: String
+     *  description: String
+     *  quantity: Integer
+     *  unitPrice: Double
+     * */
     @PostMapping("create")
     @ResponseBody
     public ResponseEntity<Object> create(@RequestHeader HashMap<String, String> header,
                                          @RequestBody Item item) {
         try {
-            if (canUserChange(header)) {
-                return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            if (!canUserChange(header)) {
+                return new ResponseEntity<>("User is not an employe",
+                        HttpStatus.FORBIDDEN);
             }
 
             var error = checkItem(item);
@@ -157,20 +170,41 @@ public class ItemsApi extends BaseApi {
         }
     }
 
+    /**
+     * An Item Object must be given.
+     * */
     @PostMapping("update")
     @ResponseBody
     public ResponseEntity<Object> updateItem(
             @RequestHeader HashMap<String, String> header,
-            @RequestBody Item item) {
+            @RequestBody HashMap<String, Object> props) {
         try {
-            if (canUserChange(header)) {
+            if (!canUserChange(header)) {
                 return new ResponseEntity<>(HttpStatus.FORBIDDEN);
             }
 
-            var error = checkItemForUpdate(item);
+            var error = checkItemForUpdate(props);
 
             if (error.length() > 0) {
                 return new ResponseEntity<>(error.toString(), HttpStatus.UNPROCESSABLE_ENTITY); /* 422 */
+            }
+
+            var item = manager.findById((Integer) props.get("itemId")).orElseThrow();
+
+            props.remove("itemId");
+            props.remove("introductionDate");
+            props.remove("IntroductionDate");
+
+            for (var prop: props.keySet()) {
+                var value = props.get(prop);
+
+                /* Use reflection to call setters */
+                Item.class.getDeclaredMethod(
+                        "set"
+                                + prop.substring(0, 1).toUpperCase()
+                                + prop.substring(1),
+                        value.getClass()
+                ).invoke(item, value);
             }
 
             return new ResponseEntity<>(manager.save(item), HttpStatus.OK); /* 200 */
