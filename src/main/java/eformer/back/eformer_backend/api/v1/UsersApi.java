@@ -249,15 +249,18 @@ public class UsersApi extends BaseApi {
             props.remove("userId");
 
             for (var prop: props.keySet()) {
-                var value = props.get(prop);
+                try {
+                    var value = props.get(prop);
 
-                /* Use reflection to call setters */
-                User.class.getDeclaredMethod(
+                    /* Use reflection to call setters */
+                    User.class.getDeclaredMethod(
                             "set"
-                                + prop.substring(0, 1).toUpperCase()
-                                + prop.substring(1),
-                                value.getClass()
-                ).invoke(user, value);
+                                    + prop.substring(0, 1).toUpperCase()
+                                    + prop.substring(1),
+                            value.getClass()
+                    ).invoke(user, value);
+                } catch (Exception ignored) {
+                }
             }
 
             var error = checkUserUpdate(user);
