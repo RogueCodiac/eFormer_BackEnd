@@ -278,7 +278,7 @@ public class UsersApi extends BaseApi {
             manager.save(user);
 
             /* 200 */
-            return new ResponseEntity<>(HttpStatus.OK);
+            return new ResponseEntity<>("S", HttpStatus.OK);
         } catch (Exception e) {
             /* 400 */
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
