@@ -20,6 +20,9 @@ public interface OrderItemsRepository extends CrudRepository<OrderItem, OrderIte
 
     List<OrderItem> findAllByOrder(Order order);
 
+    @Query("SELECT i.item FROM OrderItem i WHERE i.order = ?1")
+    List<Item> findAllInItemIds(Order order);
+
     @Query("SELECT SUM(o.quantity) FROM OrderItem o WHERE o.item = :item")
     Integer getSoldItemQuantity(@Param("item") Item item);
 

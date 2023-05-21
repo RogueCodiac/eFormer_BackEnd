@@ -427,7 +427,9 @@ public class OrdersApi extends BaseApi {
         try {
             if (canUserChange(header)) {
                 /* 200 */
-                return new ResponseEntity<>(Order.orderItemsManager.findAllByOrder(manager.findById(orderId).orElseThrow()),
+                return new ResponseEntity<>(Order
+                                .orderItemsManager
+                                .findAllInItemIds(manager.findById(orderId).orElseThrow()),
                         HttpStatus.OK);
             }
 
