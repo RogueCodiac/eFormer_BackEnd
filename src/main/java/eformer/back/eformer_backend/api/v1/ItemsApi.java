@@ -39,6 +39,11 @@ public class ItemsApi extends BaseApi {
                     item.getUnitPrice()));
         }
 
+        if (item.getCost() <= 0) {
+            error.append(String.format("Invalid cost price %f must be a positive number\n",
+                    item.getCost()));
+        }
+
         if (item.getItemId() > 0) {
             error.append("Cannot supply own ID\n");
         }
@@ -51,7 +56,21 @@ public class ItemsApi extends BaseApi {
 
         var quantity = (Integer) item.get("quantity");
         var name = (String) item.get("name");
-        var unitPrice = (Double) item.get("unitPrice");
+        Double unitPrice;
+        Double cost;
+
+        try {
+            unitPrice = (Double) item.get("unitPrice");
+        } catch (ClassCastException ignored) {
+            unitPrice = Double.valueOf((Integer) item.get("unitPrice"));
+        }
+
+        try {
+            cost = (Double) item.get("cost");
+        } catch (ClassCastException ignored) {
+            cost = Double.valueOf((Integer) item.get("cost"));
+        }
+
         var itemId = (Integer) item.get("itemId");
 
         if (quantity != null && quantity <= 0) {
@@ -67,6 +86,11 @@ public class ItemsApi extends BaseApi {
         if (unitPrice != null && unitPrice <= 0) {
             error.append(String.format("Invalid unit price %f must be a positive number\n",
                     unitPrice));
+        }
+
+        if (cost != null && cost <= 0) {
+            error.append(String.format("Invalid cost price %f must be a positive number\n",
+                    cost));
         }
 
         if (!manager.existsById(itemId)) {
@@ -206,11 +230,15 @@ public class ItemsApi extends BaseApi {
                             value.getClass()
                     ).invoke(item, value);
                 } catch (Exception ignored) {
+                    System.out.println(ignored);
                 }
             }
 
+            System.out.println("HERE");
+
             return new ResponseEntity<>(manager.save(item), HttpStatus.OK); /* 200 */
         } catch (Exception e) {
+            System.out.println(e);
             /* 400 */
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
