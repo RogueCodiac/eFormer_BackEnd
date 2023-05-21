@@ -230,15 +230,11 @@ public class ItemsApi extends BaseApi {
                             value.getClass()
                     ).invoke(item, value);
                 } catch (Exception ignored) {
-                    System.out.println(ignored);
                 }
             }
 
-            System.out.println("HERE");
-
             return new ResponseEntity<>(manager.save(item), HttpStatus.OK); /* 200 */
         } catch (Exception e) {
-            System.out.println(e);
             /* 400 */
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
