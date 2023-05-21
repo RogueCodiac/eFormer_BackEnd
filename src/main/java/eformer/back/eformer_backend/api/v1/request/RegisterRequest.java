@@ -1,4 +1,4 @@
-package eformer.back.eformer_backend.api.request;
+package eformer.back.eformer_backend.api.v1.request;
 
 public class RegisterRequest {
     private String fullName;

@@ -60,6 +60,9 @@ public class Order {
     @Column(name = "note")
     private String note;
 
+    @Column(name = "profit")
+    private Double profit;
+
     @Transient
     @JsonIgnore
     private static OrderItemsRepository orderItemsManager;
@@ -71,7 +74,8 @@ public class Order {
     protected Order(Integer orderId, Double total, Timestamp creationDate,
                     Integer numberOfItems, Double amountPaid,
                     String status, User customer,
-                    User employee, String note) {
+                    User employee, String note,
+                    Double profit) {
         this.orderId = orderId;
         this.creationDate = creationDate;
         this.numberOfItems = numberOfItems;
@@ -81,6 +85,7 @@ public class Order {
         setCustomer(customer);
         setEmployee(employee);
         setNote(note);
+        setProfit(profit);
     }
 
     public Order() {
@@ -89,7 +94,15 @@ public class Order {
 
     public Order(User customer, User employee) {
         this(-1, 0.0, new Timestamp(new Date().getTime()), 0,
-                0.0, "Pending", customer, employee, "");
+                0.0, "Pending", customer, employee, "", 0.0);
+    }
+
+    public Double getProfit() {
+        return profit;
+    }
+
+    public void setProfit(Double profit) {
+        this.profit = profit;
     }
 
     public Double getTotal() {
@@ -210,6 +223,7 @@ public class Order {
             if (orderItem.isPresent() && removedQuantity < 0) {
                 numberOfItems += removedQuantity;
                 total += removedQuantity * item.getUnitPrice();
+                profit += removedQuantity * (item.getUnitPrice() - item.getCost());
 
                 orderItem.get().addQuantity(removedQuantity);
 
@@ -222,6 +236,7 @@ public class Order {
             } else if (removedQuantity > 0 && item.getQuantity() >= removedQuantity) {
                 numberOfItems += removedQuantity;
                 total += item.getUnitPrice() * removedQuantity;
+                profit += removedQuantity * (item.getUnitPrice() - item.getCost());
 
                 orderItemsManager.save(new OrderItem(this, item, removedQuantity));
             } else {
@@ -290,6 +305,7 @@ public class Order {
             returnItems();
         }
 
+        setProfit(0.0);
         orderItemsManager.deleteAllByOrder(this);
         setStatus("Cancelled");
     }

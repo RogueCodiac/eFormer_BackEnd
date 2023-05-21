@@ -1,4 +1,4 @@
-package eformer.back.eformer_backend.api.response;
+package eformer.back.eformer_backend.api.v1.response;
 
 
 public class AuthenticationResponse {

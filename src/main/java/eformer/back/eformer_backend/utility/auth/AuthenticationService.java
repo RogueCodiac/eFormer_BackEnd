@@ -1,8 +1,8 @@
 package eformer.back.eformer_backend.utility.auth;
 
-import eformer.back.eformer_backend.api.request.AuthenticationRequest;
-import eformer.back.eformer_backend.api.request.RegisterRequest;
-import eformer.back.eformer_backend.api.response.AuthenticationResponse;
+import eformer.back.eformer_backend.api.v1.request.AuthenticationRequest;
+import eformer.back.eformer_backend.api.v1.request.RegisterRequest;
+import eformer.back.eformer_backend.api.v1.response.AuthenticationResponse;
 import eformer.back.eformer_backend.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

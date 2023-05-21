@@ -1,4 +1,4 @@
-package eformer.back.eformer_backend.api;
+package eformer.back.eformer_backend.api.v1;
 
 import eformer.back.eformer_backend.model.Order;
 import eformer.back.eformer_backend.model.User;
@@ -47,6 +47,7 @@ public class OrdersApi extends BaseApi {
             case 3 -> result = manager.getTotalSoldQuantity();
             case 4 -> result = manager.getTotalActualSales();
             case 5 -> result = manager.findAll();
+            case 6 -> result = manager.getTotalProfit();
             default -> result = null;
         }
 
@@ -286,6 +287,14 @@ public class OrdersApi extends BaseApi {
             @RequestHeader HashMap<String, String> header
     ) {
         return getStatistics(header, 5);
+    }
+
+    @PostMapping("getTotalProfit")
+    @ResponseBody
+    public ResponseEntity<Object> getProfit(
+            @RequestHeader HashMap<String, String> header
+    ) {
+        return getStatistics(header, 6);
     }
 
     @PostMapping("confirm")

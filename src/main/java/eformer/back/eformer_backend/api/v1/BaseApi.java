@@ -1,4 +1,4 @@
-package eformer.back.eformer_backend.api;
+package eformer.back.eformer_backend.api.v1;
 
 import eformer.back.eformer_backend.model.User;
 import eformer.back.eformer_backend.repository.UserRepository;

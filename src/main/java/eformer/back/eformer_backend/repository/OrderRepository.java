@@ -35,4 +35,7 @@ public interface OrderRepository extends CrudRepository<Order, Integer> {
 
     @Query("SELECT o FROM Order o WHERE o.amountPaid IS NOT NULL AND o.amountPaid > 0")
     List<Order> getAllPaid();
+
+    @Query("SELECT SUM(o.profit) FROM Order o")
+    Double getTotalProfit();
 }

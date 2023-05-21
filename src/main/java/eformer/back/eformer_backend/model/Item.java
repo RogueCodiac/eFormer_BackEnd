@@ -29,28 +29,42 @@ public class Item {
     @Column(name = "unit_price")
     private Double unitPrice;
 
+    @Column(name = "cost")
+    private Double cost;
+
     @Column(name = "introduction_date")
     @Temporal(TemporalType.TIMESTAMP)
     private final Timestamp introductionDate;
 
     protected Item(Integer itemId, String name, String description,
-                Integer quantity, Double unitPrice, Timestamp introductionDate) {
+                Integer quantity, Double unitPrice, Timestamp introductionDate,
+                   Double cost) {
         this.itemId = itemId;
         this.introductionDate = introductionDate;
         setName(name);
         setDescription(description);
         setQuantity(quantity);
         setUnitPrice(unitPrice);
+        setCost(cost);
     }
 
     public Item(String name, String description,
-                Integer quantity, Double unitPrice) {
+                Integer quantity, Double unitPrice, Double cost) {
         this(-1, name, description, quantity,
-                unitPrice, new Timestamp(new Date().getTime()));
+                unitPrice, new Timestamp(new Date().getTime()),
+                cost);
     }
 
     public Item() {
-        this("", "", 0, 0.0);
+        this("", "", 0, 0.0, 0.0);
+    }
+
+    public Double getCost() {
+        return cost;
+    }
+
+    public void setCost(Double cost) {
+        this.cost = cost;
     }
 
     public String getName() {
