@@ -267,7 +267,7 @@ public class Order {
         addItems(items);
     }
 
-    public void confirm() {
+    public void confirm(Double amountPaid) {
         if (!isPending()) {
             throw new InvalidOrderUpdateException("Order is " + getStatus());
         }
@@ -282,6 +282,7 @@ public class Order {
             items.add(item);
         }
 
+        setAmountPaid(amountPaid);
         itemsManager.saveAll(items);
         setStatus("Confirmed");
     }

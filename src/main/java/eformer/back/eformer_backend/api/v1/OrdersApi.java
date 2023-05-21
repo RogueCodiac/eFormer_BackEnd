@@ -297,20 +297,28 @@ public class OrdersApi extends BaseApi {
         return getStatistics(header, 6);
     }
 
+    /**
+     * Requires:
+     *  orderId: The ID of the order
+     *  amountPaid: Amount paid for the order
+     * */
     @PostMapping("confirm")
     @ResponseBody
     public ResponseEntity<Object> confirm(
             @RequestHeader HashMap<String, String> header,
-            @RequestBody Integer orderId
+            @RequestBody HashMap<String, Object> body
     ) {
         try {
+            var orderId = (Integer) body.get("orderId");
+            var amountPaid = (Double) body.get("amountPaid");
+
             if (!canUserChange(header)) {
                 /* 403 */
                 return new ResponseEntity<>("User is not an employee", HttpStatus.FORBIDDEN);
             }
 
             var order = manager.findById(orderId).orElseThrow();
-            order.confirm();
+            order.confirm(amountPaid);
 
             manager.save(order);
 
