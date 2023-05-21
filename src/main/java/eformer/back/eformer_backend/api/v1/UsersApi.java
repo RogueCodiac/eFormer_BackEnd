@@ -6,6 +6,7 @@ import eformer.back.eformer_backend.repository.UserRepository;
 import eformer.back.eformer_backend.utility.auth.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -234,6 +235,14 @@ public class UsersApi extends BaseApi {
             if (!user.equals(userByUsername)) {
                 /* 422 */
                 return new ResponseEntity<>("Username & ID don't match", HttpStatus.UNPROCESSABLE_ENTITY);
+            }
+
+            if (props.containsKey("password")) {
+                var pass = (String) props.get("password");
+
+                if (pass.length() == 0 || encoder.encode(pass).equals(user.getPassword())) {
+                    props.remove("password");
+                }
             }
 
             props.remove("username");
