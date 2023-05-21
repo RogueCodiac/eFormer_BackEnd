@@ -21,4 +21,6 @@ public interface UserRepository extends CrudRepository<User, Integer> {
     List<User> findAllByCreateTimeBefore(Date date);
 
     List<User> findAllByAdLevel(Integer adLevel);
+
+    List<User> findAllByAdLevelGreaterThanEqual(Integer adLevel);
 }
