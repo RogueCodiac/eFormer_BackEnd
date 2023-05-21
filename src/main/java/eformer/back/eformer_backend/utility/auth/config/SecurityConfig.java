@@ -33,6 +33,8 @@ public class SecurityConfig {
                 .permitAll()
                 .requestMatchers("/api/v1/items/get**") // Anyone can see the items
                 .permitAll()
+                .requestMatchers("/api/v1/users/roles") // Anyone can see the roles
+                .permitAll()
                 .anyRequest() // These require authentication
                 .authenticated()
                 .and()

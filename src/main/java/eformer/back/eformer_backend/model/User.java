@@ -1,5 +1,6 @@
 package eformer.back.eformer_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -7,10 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 
 /**
@@ -44,6 +42,14 @@ public class User implements UserDetails {
 
     @Column(name = "ad_level")
     private Integer adLevel;
+
+    @Transient
+    @JsonIgnore
+    private static final List<String> roles = List.of(new String[]{"Banned", "Customer", "Employee", "Manager"});
+
+    public static List<String> getRoles() {
+        return roles;
+    }
 
     public static boolean isValidAdLevel(Integer adLevel) {
         return adLevel <= getMaxAdLevel();
@@ -126,13 +132,7 @@ public class User implements UserDetails {
     }
 
     public String translateRole() {
-        return switch (getAdLevel()) {
-            case 2 -> "Manager";
-            case 1 -> "Employee";
-            case 0 -> "Customer";
-            case -1 -> "Guest";
-            default -> "Banned";
-        };
+        return roles.get(getAdLevel() + 1);
     }
 
     @Override

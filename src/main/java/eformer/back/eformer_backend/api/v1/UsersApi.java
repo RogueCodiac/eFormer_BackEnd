@@ -329,4 +329,10 @@ public class UsersApi extends BaseApi {
     public ResponseEntity<Object> getCustomers(@RequestHeader HashMap<String, String> header) {
         return getByLevel(header, 0);
     }
+
+    @GetMapping("roles")
+    @ResponseBody
+    public ResponseEntity<Object> getRoles() {
+        return new ResponseEntity<>(User.getRoles(), HttpStatus.OK);
+    }
 }
