@@ -299,6 +299,32 @@ public class UsersApi extends BaseApi {
         }
     }
 
+    @PostMapping("getByUsername")
+    @ResponseBody
+    public ResponseEntity<Object> getByUsername(@RequestHeader HashMap<String, String> header,
+                                             @RequestBody String name) {
+        try {
+            if (header == null) {
+                /* 422 */
+                return new ResponseEntity<>("Missing sender or date fields",
+                        HttpStatus.UNPROCESSABLE_ENTITY);
+            } else if (!canUserChange(header)) {
+                /* 403 */
+                return new ResponseEntity<>("Sender is not a manager",
+                        HttpStatus.FORBIDDEN);
+            }
+
+            /* 200 */
+            return new ResponseEntity<>(
+                    manager.findByUsername(name).orElseThrow(),
+                    HttpStatus.OK
+            );
+        } catch (Exception e) {
+            /* 400 */
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @PostMapping("getEmployees")
     @ResponseBody
     public ResponseEntity<Object> getEmployees(@RequestHeader HashMap<String, String> header) {
