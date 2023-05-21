@@ -67,6 +67,10 @@ public class Item {
         this.cost = cost;
     }
 
+    public void setCost(Integer cost) {
+        setCost(cost.doubleValue());
+    }
+
     public String getName() {
         return name;
     }
@@ -93,6 +97,10 @@ public class Item {
 
     public void setUnitPrice(Double unitPrice) {
         this.unitPrice = unitPrice;
+    }
+
+    public void setUnitPrice(Integer unitPrice) {
+        setUnitPrice(unitPrice.doubleValue());
     }
 
     public Integer getItemId() {
