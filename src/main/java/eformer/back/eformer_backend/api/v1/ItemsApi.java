@@ -195,15 +195,18 @@ public class ItemsApi extends BaseApi {
             props.remove("IntroductionDate");
 
             for (var prop: props.keySet()) {
-                var value = props.get(prop);
+                try {
+                    var value = props.get(prop);
 
-                /* Use reflection to call setters */
-                Item.class.getDeclaredMethod(
-                        "set"
-                                + prop.substring(0, 1).toUpperCase()
-                                + prop.substring(1),
-                        value.getClass()
-                ).invoke(item, value);
+                    /* Use reflection to call setters */
+                    Item.class.getDeclaredMethod(
+                            "set"
+                                    + prop.substring(0, 1).toUpperCase()
+                                    + prop.substring(1),
+                            value.getClass()
+                    ).invoke(item, value);
+                } catch (Exception ignored) {
+                }
             }
 
             return new ResponseEntity<>(manager.save(item), HttpStatus.OK); /* 200 */
