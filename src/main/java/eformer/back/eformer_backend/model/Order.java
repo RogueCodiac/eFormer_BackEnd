@@ -65,11 +65,11 @@ public class Order {
 
     @Transient
     @JsonIgnore
-    private static OrderItemsRepository orderItemsManager;
+    public static OrderItemsRepository orderItemsManager;
 
     @Transient
     @JsonIgnore
-    private static ItemRepository itemsManager;
+    public static ItemRepository itemsManager;
 
     protected Order(Integer orderId, Double total, Timestamp creationDate,
                     Integer numberOfItems, Double amountPaid,

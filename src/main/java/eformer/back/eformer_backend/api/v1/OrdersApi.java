@@ -417,4 +417,26 @@ public class OrdersApi extends BaseApi {
                     HttpStatus.BAD_REQUEST);
         }
     }
+
+    @PostMapping("getOrderItems")
+    @ResponseBody
+    public ResponseEntity<Object> getOrderItems(
+            @RequestHeader HashMap<String, String> header,
+            @RequestBody Integer orderId
+    ) {
+        try {
+            if (canUserChange(header)) {
+                /* 200 */
+                return new ResponseEntity<>(Order.orderItemsManager.findAllByOrder(manager.findById(orderId).orElseThrow()),
+                        HttpStatus.OK);
+            }
+
+            /* 403 */
+            return new ResponseEntity<>("Sender is not an employee",
+                    HttpStatus.FORBIDDEN);
+        } catch (Exception e) {
+            /* 400 */
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
 }
