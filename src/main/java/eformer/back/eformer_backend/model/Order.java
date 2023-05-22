@@ -307,6 +307,7 @@ public class Order {
         }
 
         setProfit(0.0);
+        numberOfItems = 0;
         orderItemsManager.deleteAllByOrder(this);
         setStatus("Cancelled");
     }

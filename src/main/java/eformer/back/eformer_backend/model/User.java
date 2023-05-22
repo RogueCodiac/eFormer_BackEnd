@@ -38,7 +38,7 @@ public class User implements UserDetails {
 
     @Column(name = "create_time")
     @Temporal(TemporalType.TIMESTAMP)
-    private final Timestamp createTime;
+    private Timestamp createTime;
 
     @Column(name = "ad_level")
     private Integer adLevel;
@@ -72,7 +72,28 @@ public class User implements UserDetails {
         setFullName(fullName);
         setAdLevel(adLevel);
         this.userId = userId;
+        setCreateTime(createTime);
+    }
+
+    protected User(Integer userId, String username, String email,
+                   String password, String createTime, Integer adLevel,
+                   String fullName) {
+        setUsername(username);
+        setEmail(email);
+        setPassword(password);
+        setFullName(fullName);
+        setAdLevel(adLevel);
+        this.userId = userId;
+        setCreateTime(createTime);
+    }
+
+    public void setCreateTime(Timestamp createTime) {
         this.createTime = createTime;
+    }
+
+    public void setCreateTime(String createTime) {
+        var temp = createTime.split("T");
+        this.createTime = Timestamp.valueOf(temp[0] + ' ' + temp[1]);
     }
 
     public User(String username, String email, String password, Integer adLevel, String fullName) {

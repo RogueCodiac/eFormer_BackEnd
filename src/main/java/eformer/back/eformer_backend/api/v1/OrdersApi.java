@@ -156,16 +156,19 @@ public class OrdersApi extends BaseApi {
     @ResponseBody
     public ResponseEntity<Object> getByCustomerAndEmployee(
             @RequestHeader HashMap<String, String> header,
-            @RequestBody HashMap<String, User> users
+            @RequestBody HashMap<String, Integer> users
     ) {
         try {
-            var customer = users.get("customer");
-            var employee = users.get("employee");
+            var customerId = users.get("customer");
+            var employeeId = users.get("employee");
+
+            var customer = usersManager.findById(customerId).orElseThrow();
+            var employee = usersManager.findById(employeeId).orElseThrow();
 
             if (canUserChange(header)) {
                 /* 200 */
-                return new ResponseEntity<>(manager.findAllByCustomerAndEmployee(customer, employee)
-                        , HttpStatus.OK);
+                return new ResponseEntity<>(manager.findAllByCustomerAndEmployee(customer, employee),
+                        HttpStatus.OK);
             }
 
             /* 403 */
