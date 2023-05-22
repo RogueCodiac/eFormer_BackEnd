@@ -313,7 +313,13 @@ public class OrdersApi extends BaseApi {
     ) {
         try {
             var orderId = (Integer) body.get("orderId");
-            var amountPaid = (Double) body.get("amountPaid");
+            Double amountPaid;
+
+            try {
+                amountPaid = (Double) body.get("amountPaid");
+            } catch (ClassCastException ignored) {
+                amountPaid = Double.valueOf((Integer) body.get("amountPaid"));
+            }
 
             if (!canUserChange(header)) {
                 /* 403 */
