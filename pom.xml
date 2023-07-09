@@ -85,6 +85,9 @@
     </dependencies>
 
     <build>
+        <finalName>
+            eformer.backend
+        </finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
